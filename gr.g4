@@ -1,0 +1,119 @@
+grammar gr;		
+prog:	stmts;
+// prog:	stmts EOF ;
+stmts: stmt* ;
+stmt: code_line? comment? NWLN;
+code_line: func_decl 
+      | var_asign 
+      | func_call 
+      | var_decl 
+      | loop 
+      | conditional 
+      | BREAK
+      // | expr
+      ;
+comment: START_COMMENT . ;
+code_block: '{' stmts '}' ;
+// var_decl: ACCES_MOD IDENT ':' 'int' '=' expr ;
+var_decl: ACCES_MOD IDENT COLUMN TYPE '=' expr ;
+var_asign: IDENT '=' DATA;
+
+
+conditional_body: code_block;
+loop_body: code_block;
+
+loop: for_loop
+      | while_loop
+      | do_while_loop
+      ;
+
+while_loop: WHILE condition loop_body ;
+do_while_loop: DO  loop_body  WHILE '(' condition ')' ;
+for_loop: for | forin loop_body ;
+forin: FOR IDENT IN (func_call | IDENT );
+for: FOR (var_decl ';' condition ';' expr ) | (';' ';');
+
+conditional: IF condition conditional_body 
+            (ELSE_IF condition conditional_body)*
+            (ELSE conditional_body)? ;
+
+// condition: '(' expr '}';
+condition: expr;
+// bool: expr (AND | OR | NOT) expr ;
+// add: expr ('+'|'-') expr ;
+// mult: expr ('*'|'/') expr ;
+// comp: expr ('>' | '<' | '=' | '>=' | '<=') expr ;
+//expr:
+//    mult
+//    | add
+//    | bool
+//    | comp
+//|   | DATA
+//    | IDENT
+//    | func_call
+//    |	'(' expr ')'
+//    ;
+expr: expr '**' expr
+    | expr ('*'|'/') expr
+    | expr ('+'|'-') expr
+    | expr (AND | OR | NOT) expr
+    | expr ('>' | '<' | '=' | '>=' | '<=') expr
+    | func_call
+|   | DATA
+    | IDENT
+    |	'(' expr ')'
+    ;	
+func_call: IDENT '(' params ')' ;
+func_decl: return_type IDENT '(' (param_decl)* ')' 
+'{' stmts RETURN expr '}' ;
+param_decl: IDENT COLUMN TYPE ;
+return_type: TYPE
+            | '(' ERR_TYPE ',' TYPE ')' ;
+params: (expr (', ' expr )*)? ;
+
+START_COMMENT: '#' ; 
+TYPE: 'int'
+      | 'float'
+      | 'string'
+      ;
+COLUMN: ':' ;
+SEMICOL: ';' ;
+FOR: 'for' ;
+AND: 'and' ;
+OR: 'or' ;
+NOT: 'not' | '!';
+IF: 'if' ;
+ELSE_IF: 'else' 'if' ;
+IN: 'in' ;
+ELSE: 'else' ;
+WHILE: 'while' ;
+DO: 'do' ;
+BREAK: 'break' ;
+RETURN: 'return' ;
+ACCES_MOD: 'const' | 'let' ;
+KEYWORD: FOR
+        | ACCES_MOD
+        | IF
+        | ELSE_IF
+        | ELSE
+        | TYPE
+        | RETURN
+        ;
+DATA: INT
+      | STRING
+      | FLOAT
+      | BOOL
+      ;
+QUOTE: '"' ;
+STRING: QUOTE [a-zA-Z0-9!@#$%^&*()-=_+~]* QUOTE ;
+INT: [0-9]+ ;
+FLOAT: [0-9]* '.' [0-9]+ ;
+BOOL: 'true'
+    | 'false'
+    ;
+ERR_TYPE: 'error' ;
+
+IDENT : [a-zA-Z]+  ; 
+
+NWLN : '\r'? '\n' ;
+SPACE: (' '|'\r'|'\t'|'\u000C')+ -> skip ;
