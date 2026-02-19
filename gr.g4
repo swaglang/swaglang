@@ -3,27 +3,27 @@ prog:	stmts EOF ;
 stmts: stmt* ;
 stmt: code_line? comment? NWLN;
 code_line: func_decl 
-      | var_asign 
-      | func_call 
-      | var_decl 
-      | loop 
-      | conditional 
-      | BREAK
-      // | expr
-      ;
+         | var_assign 
+         | func_call 
+         | var_decl 
+         | loop 
+         | conditional 
+         | BREAK
+         // | expr
+         ;
 comment: START_COMMENT . ;
 code_block: '{' stmts '}' ;
-// var_decl: ACCES_MOD IDENT ':' 'int' '=' expr ;
-var_decl: ACCES_MOD IDENT COLUMN TYPE '=' expr ;
-var_asign: IDENT '=' DATA;
+// var_decl: ACCESS_MOD IDENT ':' 'int' '=' expr ;
+var_decl: ACCESS_MOD IDENT COLUMN TYPE '=' expr ;
+var_assign: IDENT '=' DATA;
 
 conditional_body: code_block;
 loop_body: code_block;
 
 loop: for_loop
-      | while_loop
-      | do_while_loop
-      ;
+    | while_loop
+    | do_while_loop
+    ;
 
 while_loop: WHILE condition loop_body ;
 do_while_loop: DO  loop_body  WHILE '(' condition ')' ;
@@ -66,14 +66,14 @@ func_decl: return_type IDENT '(' (param_decl)* ')'
 '{' stmts RETURN expr '}' ;
 param_decl: IDENT COLUMN TYPE ;
 return_type: TYPE
-            | '(' ERR_TYPE ',' TYPE ')' ;
+           | '(' ERR_TYPE ',' TYPE ')' ;
 params: (expr (', ' expr )*)? ;
 
 START_COMMENT: '#' ; 
 TYPE: 'int'
-      | 'float'
-      | 'string'
-      ;
+    | 'float'
+    | 'string'
+    ;
 COLUMN: ':' ;
 SEMICOL: ';' ;
 FOR: 'for' ;
@@ -88,20 +88,20 @@ WHILE: 'while' ;
 DO: 'do' ;
 BREAK: 'break' ;
 RETURN: 'return' ;
-ACCES_MOD: 'const' | 'let' ;
+ACCESS_MOD: 'const' | 'let' ;
 KEYWORD: FOR
-        | ACCES_MOD
-        | IF
-        | ELSE_IF
-        | ELSE
-        | TYPE
-        | RETURN
-        ;
+       | ACCESS_MOD
+       | IF
+       | ELSE_IF
+       | ELSE
+       | TYPE
+       | RETURN
+       ;
 DATA: INT
-      | STRING
-      | FLOAT
-      | BOOL
-      ;
+    | STRING
+    | FLOAT
+    | BOOL
+    ;
 STRING: '"' ( ~["\\\r\n] | '\\' . )* '"' ;
 INT: [0-9]+ ;
 FLOAT: [0-9]* '.' [0-9]+ ;
