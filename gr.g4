@@ -59,7 +59,7 @@ expr: expr '**' expr
     | expr (AND | OR | NOT) expr
     | expr ('>' | '<' | '=' | '>=' | '<=') expr
     | func_call
-|   | DATA
+    | DATA
     | IDENT
     |	'(' expr ')'
     ;	
