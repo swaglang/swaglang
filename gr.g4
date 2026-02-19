@@ -31,9 +31,9 @@ loop: for_loop
 
 while_loop: WHILE condition loop_body ;
 do_while_loop: DO  loop_body  WHILE '(' condition ')' ;
-for_loop: for | forin loop_body ;
+for_loop: (FOR (var_decl? ';' condition? ';' expr? )
+        | forin) loop_body ;
 forin: FOR IDENT IN (func_call | IDENT );
-for: FOR (var_decl ';' condition ';' expr ) | (';' ';');
 
 conditional: IF condition conditional_body 
             (ELSE_IF condition conditional_body)*
