@@ -71,7 +71,7 @@ func_decl: return_type IDENT '(' (param_decl)* ')'
 param_decl: IDENT COLUMN TYPE ;
 return_type: TYPE
            | '(' ERR_TYPE ',' TYPE ')' ;
-params: (expr (', ' expr )*)? ;
+params: (expr (',' expr )*)? ;
 
 START_COMMENT: '#' ; 
 TYPE: 'int'
