@@ -67,7 +67,7 @@ expr: expr '**' expr
     ;	
 func_call: IDENT '(' params ')' ;
 func_decl: return_type IDENT '(' (param_decl)* ')' 
-'{' stmts RETURN expr '}' ;
+'{' stmts RETURN expr NWLN? '}' ;
 param_decl: IDENT COLUMN TYPE ;
 return_type: TYPE
            | '(' ERR_TYPE ',' TYPE ')' ;
