@@ -102,8 +102,7 @@ DATA: INT
       | FLOAT
       | BOOL
       ;
-QUOTE: '"' ;
-STRING: QUOTE [a-zA-Z0-9!@#$%^&*()-=_+~]* QUOTE ;
+STRING: '"' ( ~["\\\r\n] | '\\' . )* '"' ;
 INT: [0-9]+ ;
 FLOAT: [0-9]* '.' [0-9]+ ;
 BOOL: 'true'
