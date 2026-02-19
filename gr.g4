@@ -1,6 +1,5 @@
 grammar gr;		
-prog:	stmts;
-// prog:	stmts EOF ;
+prog:	stmts EOF ;
 stmts: stmt* ;
 stmt: code_line? comment? NWLN;
 code_line: func_decl 
@@ -17,7 +16,6 @@ code_block: '{' stmts '}' ;
 // var_decl: ACCES_MOD IDENT ':' 'int' '=' expr ;
 var_decl: ACCES_MOD IDENT COLUMN TYPE '=' expr ;
 var_asign: IDENT '=' DATA;
-
 
 conditional_body: code_block;
 loop_body: code_block;
