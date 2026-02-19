@@ -1,7 +1,8 @@
 grammar gr;		
 prog:	stmts EOF ;
-stmts: stmt* ;
+stmts: stmt* last_stmt? ;
 stmt: code_line? comment? NWLN;
+// TODO: only declaration
 code_line: func_decl 
          | var_assign 
          | func_call 
@@ -10,6 +11,9 @@ code_line: func_decl
          | conditional 
          | BREAK
          // | expr
+         ;
+last_stmt: func_decl
+         | var_decl
          ;
 comment: START_COMMENT . ;
 code_block: '{' stmts '}' ;
