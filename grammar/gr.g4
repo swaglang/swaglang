@@ -179,7 +179,8 @@ expr
 | expr ('+'|'-') expr
 | expr (AND | OR | NOT) expr
 | expr ('>' | '<' | '=' | '>=' | '<=') expr
-| expr '++' | '++' expr
+| var_ref '++'
+| var_ref '--'
 | expr '%' expr
 | expr '//' expr
 | expr '?' expr COLUMN expr
