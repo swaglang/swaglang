@@ -2,7 +2,7 @@ grammar gr;
 
 // LEXER
 START_COMMENT: '#' ; 
-TYPE: 'int' | 'float' | 'string' ;
+TYPE: 'int' | 'float' | 'string' | 'bool' ('[]')?;
 COLUMN: ':' ;
 SEMICOL: ';' ;
 // L_BR: '{' ;
@@ -27,7 +27,7 @@ INT: [0-9]+ ;
 FLOAT: [0-9]* '.' [0-9]+ ;
 BOOL: 'true' | 'false' ;
 IDENT : [a-zA-Z]+  ; 
-ERR_TYPE: IDENT ;
+// ERR_TYPE: IDENT ;
 NWLN : '\r'? '\n' ;
 SPACE: (' '|'\r'|'\t'|'\u000C')+ -> skip ;
 
@@ -71,7 +71,7 @@ func_decl
 
 return_type
 : TYPE
-| '(' ERR_TYPE ',' TYPE ')' 
+| '(' IDENT ',' TYPE ')' 
 ;
 
 comment
