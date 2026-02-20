@@ -70,9 +70,14 @@ pure_func_stmt: func_decl
 | loop 
 | conditional 
 | BREAK
-| RETURN expr
+| return
 | DEFER expr
 | expr
+;
+
+return
+: RETURN expr
+| RETURN IDENT, expr
 ;
 
 func_decl
