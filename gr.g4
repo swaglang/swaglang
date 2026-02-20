@@ -19,6 +19,9 @@ func_stmt: func_decl
 
 func_decl: return_type IDENT '(' (param_decl)* ')' 
 '{' func_body RETURN expr NWLN? '}' ;
+return_type: TYPE
+           | '(' ERR_TYPE ',' TYPE ')' ;
+
 
 comment: START_COMMENT . ;
 code_block: '{' stmts '}' ;
@@ -55,8 +58,6 @@ expr: expr '**' expr
     ;	
 func_call: IDENT '(' params ')' ;
 param_decl: IDENT COLUMN TYPE ;
-return_type: TYPE
-           | '(' ERR_TYPE ',' TYPE ')' ;
 params: (expr (',' expr )*)? ;
 
 START_COMMENT: '#' ; 
@@ -98,9 +99,9 @@ FLOAT: [0-9]* '.' [0-9]+ ;
 BOOL: 'true'
     | 'false'
     ;
-ERR_TYPE: IDENT ;
 
 IDENT : [a-zA-Z]+  ; 
+ERR_TYPE: IDENT ;
 
 NWLN : '\r'? '\n' ;
 SPACE: (' '|'\r'|'\t'|'\u000C')+ -> skip ;
