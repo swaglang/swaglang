@@ -2,7 +2,7 @@ grammar gr;
 
 // LEXER
 START_COMMENT: '#' ; 
-TYPE: 'int' | 'float' | 'string' | 'bool' ('[]')?;
+TYPE: ('int' | 'float' | 'string' | 'bool') ('[]')?;
 COLUMN: ':' ;
 SEMICOL: ';' ;
 // L_BR: '{' ;
@@ -21,7 +21,6 @@ BREAK: 'break' ;
 RETURN: 'return' ;
 ACCESS_MOD: 'const' | 'let' ;
 KEYWORD: FOR | ACCESS_MOD | IF | ELSE_IF | ELSE | TYPE | RETURN ;
-DATA: INT | STRING | FLOAT | BOOL | '[' (DATA)* ']';
 STRING: '"' ( ~["\\\r\n] | '\\' . )* '"' ;
 INT: [0-9]+ ;
 FLOAT: [0-9]* '.' [0-9]+ ;
@@ -33,6 +32,9 @@ SPACE: (' '|'\r'|'\t'|'\u000C')+ -> skip ;
 
 
 // PARSER
+data: INT | STRING | FLOAT | BOOL | list | dict | set;
+list: '[' (data (',' data)*)? ']' ;
+
 prog
 :	stmts EOF 
 ;
@@ -83,7 +85,7 @@ var_decl
 ;
 
 var_assign
-: IDENT '=' DATA
+: IDENT '=' data
 ;
 
 conditional_body
@@ -131,7 +133,7 @@ expr
 | expr (AND | OR | NOT) expr
 | expr ('>' | '<' | '=' | '>=' | '<=') expr
 | func_call
-| DATA
+| data
 | IDENT
 |	'(' expr ')'
 ;	
