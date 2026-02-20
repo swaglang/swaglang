@@ -21,7 +21,7 @@ RETURN: 'return' ;
 ACCESS_MOD: 'const' | 'let' ;
 KEYWORD: FOR | ACCESS_MOD | IF | ELSE_IF | ELSE | TYPE | RETURN ;
 STRING: '"' ( ~["\\\r\n] | '\\' . )* '"' ;
-INT: [0-9]+ ;
+INT: '-'?[0-9]+ ;
 FLOAT: [0-9]* '.' [0-9]+ ;
 BOOL: 'true' | 'false' ;
 IDENT : [a-zA-Z]+  ; 
