@@ -1,7 +1,7 @@
 grammar gr;		
 prog:	stmts EOF ;
-stmts: stmt* last_stmt? ;
-stmt: pure_stmt? comment? NWLN;
+stmts: (stmt NWLN)* stmt? ;
+stmt: pure_stmt? comment? ;
 
 pure_stmt: func_decl 
          | var_decl 
@@ -17,9 +17,9 @@ func_stmt: func_decl
          | BREAK
          ;
 
-last_stmt: func_decl
-         | var_decl
-         ;
+func_decl: return_type IDENT '(' (param_decl)* ')' 
+'{' func_body RETURN expr NWLN? '}' ;
+
 comment: START_COMMENT . ;
 code_block: '{' stmts '}' ;
 var_decl: ACCESS_MOD IDENT COLUMN TYPE '=' expr ;
@@ -54,8 +54,6 @@ expr: expr '**' expr
     |	'(' expr ')'
     ;	
 func_call: IDENT '(' params ')' ;
-func_decl: return_type IDENT '(' (param_decl)* ')' 
-'{' stmts RETURN expr NWLN? '}' ;
 param_decl: IDENT COLUMN TYPE ;
 return_type: TYPE
            | '(' ERR_TYPE ',' TYPE ')' ;
