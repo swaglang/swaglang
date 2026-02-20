@@ -1,7 +1,6 @@
 grammar gr;		
 
 // LEXER
-START_INLINE_COMMENT: '#' ; 
 TYPE: ('int' | 'float' | 'string' | 'bool') ('[]')?;
 COLUMN: ':' ;
 SEMICOL: ';' ;
@@ -29,11 +28,12 @@ IDENT : [a-zA-Z]+  ;
 // ERR_TYPE: IDENT ;
 NWLN : '\r'? '\n' ;
 SPACE: (' '|'\r'|'\t'|'\u000C')+ -> skip ;
+// TODO: move to parser?
+// TODO: fix inline comments
 COMMENT: '/*' .*? '*/' -> skip;
+INLINE_COMMENT: '//' .*? NWLN; 
 
 // PARSER
-
-
 prog
 :	stmts EOF 
 ;
@@ -44,7 +44,7 @@ stmts
 ;
 
 stmt
-: pure_stmt? comment? 
+: pure_stmt?
 ;
 
 pure_stmt
@@ -52,9 +52,6 @@ pure_stmt
 | var_decl 
 ;
 
-comment
-: START_INLINE_COMMENT . 
-;
 code_block
 : '{' (func_stmt? NWLN)* func_stmt? '}'
 ;
