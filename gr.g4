@@ -69,10 +69,18 @@ pure_func_stmt: func_decl
 | var_decl 
 | loop 
 | conditional 
-| BREAK
+| break
 | return
-| DEFER expr
+| defer
 | expr
+;
+
+defer
+: DEFER expr
+;
+
+break
+: BREAK
 ;
 
 return
