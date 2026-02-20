@@ -5,6 +5,8 @@ START_COMMENT: '#' ;
 TYPE: 'int' | 'float' | 'string' ;
 COLUMN: ':' ;
 SEMICOL: ';' ;
+// L_BR: '{' ;
+// R_BR: '}' ;
 FOR: 'for' ;
 AND: 'and' ;
 OR: 'or' ;
@@ -50,7 +52,7 @@ pure_stmt
 ;
 
 code_block
-: (func_stmt? NWLN)* func_stmt? 
+: '{' (func_stmt? NWLN)* func_stmt? '}'
 ;
 
 func_stmt: func_decl 
