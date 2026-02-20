@@ -4,6 +4,12 @@ grammar gr;
 TYPE: ('int' | 'float' | 'string' | 'bool' | 'var') ('[]')? | 'void';
 COLUMN: ':' ;
 SEMICOL: ';' ;
+ASSIGN: '=' ;
+ADD_ASSIGN: '+=' ;
+SUB_ASSIGN: '-=' ;
+MUL_ASSIGN: '*=' ;
+DIV_ASSIGN: '/=' ;
+MOD_ASSIGN: '%=' ;
 // L_BR: '{' ;
 // R_BR: '}' ;
 FOR: 'for' ;
@@ -125,7 +131,7 @@ var_decl
 ;
 
 var_assign
-: var_ref ('=' | '+=' | '-=' | '*=') expr
+: var_ref ( ASSIGN | ADD_ASSIGN | SUB_ASSIGN | MUL_ASSIGN | DIV_ASSIGN | MOD_ASSIGN ) expr
 |  var_ref ',' var_ref '=' func_call
 ;
 
