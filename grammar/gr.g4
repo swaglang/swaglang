@@ -41,11 +41,12 @@ prog
 
 // TODO: deal with NWLN statment junk
 stmts
-: (stmt? NWLN)* stmt? 
+: (stmt | NWLN)*
 ;
 
 stmt
-: pure_stmt? comment?
+: pure_stmt comment?
+| comment
 ;
 
 comment
@@ -59,7 +60,7 @@ pure_stmt
 ;
 
 code_block
-: '{' (func_stmt? NWLN)* func_stmt? '}'
+: '{' (func_stmt NWLN)* '}'
 ;
 func_stmt: pure_func_stmt? comment? ;
 
