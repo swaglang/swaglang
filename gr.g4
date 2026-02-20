@@ -18,8 +18,9 @@ WHILE: 'while' ;
 DO: 'do' ;
 BREAK: 'break' ;
 RETURN: 'return' ;
+DEFER: 'defer' ;
 ACCESS_MOD: 'const' | 'let' ;
-KEYWORD: FOR | ACCESS_MOD | IF | ELSE_IF | ELSE | TYPE | RETURN ;
+KEYWORD: FOR | ACCESS_MOD | IF | ELSE_IF | ELSE | TYPE | RETURN | DEFER ;
 STRING: '"' ( ~["\\\r\n] | '\\' . )* '"' ;
 INT: '-'?[0-9]+ ;
 FLOAT: '-'?[0-9]* '.' [0-9]+ ;
@@ -64,6 +65,7 @@ func_stmt: func_decl
 | conditional 
 | BREAK
 | RETURN expr
+| DEFER expr
 ;
 
 func_decl
