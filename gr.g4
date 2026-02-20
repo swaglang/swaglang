@@ -93,7 +93,11 @@ list
 ;
 
 dict
-: '{' (var_decl (',' var_decl)*)? '}' 
+: '{' (dict_var_decl (',' dict_var_decl)*)? '}' 
+;
+
+dict_var_decl
+: IDENT (COLUMN TYPE)? '=' expr
 ;
 
 var_decl
