@@ -1,7 +1,7 @@
 grammar gr;		
 
 // LEXER
-START_COMMENT: '#' ; 
+START_INLINE_COMMENT: '#' ; 
 TYPE: ('int' | 'float' | 'string' | 'bool') ('[]')?;
 COLUMN: ':' ;
 SEMICOL: ';' ;
@@ -29,7 +29,7 @@ IDENT : [a-zA-Z]+  ;
 // ERR_TYPE: IDENT ;
 NWLN : '\r'? '\n' ;
 SPACE: (' '|'\r'|'\t'|'\u000C')+ -> skip ;
-
+COMMENT: '/*' .*? '*/' -> skip;
 
 // PARSER
 
@@ -53,7 +53,7 @@ pure_stmt
 ;
 
 comment
-: START_COMMENT . 
+: START_INLINE_COMMENT . 
 ;
 code_block
 : '{' (func_stmt? NWLN)* func_stmt? '}'
@@ -106,7 +106,7 @@ var_decl
 ;
 
 var_assign
-: IDENT '=' data
+: IDENT ('=' | '+=' | '-=' | '*=') data
 ;
 
 conditional_body
@@ -153,6 +153,7 @@ expr
 | expr ('+'|'-') expr
 | expr (AND | OR | NOT) expr
 | expr ('>' | '<' | '=' | '>=' | '<=') expr
+| expr '++' | '++' expr
 | func_call
 | data
 | IDENT
