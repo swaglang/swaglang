@@ -101,7 +101,7 @@ dict_var_decl
 ;
 
 var_ref
-: IDENT ('[' (INT | STRING)? ']')*
+: IDENT (('[' (INT | STRING)? ']') | ('.' var_ref))*
 ;
 
 var_decl
