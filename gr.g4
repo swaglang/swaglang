@@ -1,13 +1,13 @@
 grammar gr;		
 prog:	stmts EOF ;
-stmts: (stmt NWLN)* stmt? ;
+stmts: (stmt? NWLN)* stmt? ;
 stmt: pure_stmt? comment? ;
 
 pure_stmt: func_decl 
          | var_decl 
          ;
 
-func_body: func_stmt* ;
+func_body: (func_stmt? NWLN)* func_stmt? ;
 func_stmt: func_decl 
          | var_assign 
          | func_call 
@@ -19,7 +19,7 @@ func_stmt: func_decl
          ;
 
 func_decl: return_type IDENT '(' (param_decl)* ')' 
-'{' func_body NWLN? '}' ;
+'{' func_body '}' ;
 return_type: TYPE
            | '(' ERR_TYPE ',' TYPE ')' ;
 
