@@ -32,8 +32,7 @@ SPACE: (' '|'\r'|'\t'|'\u000C')+ -> skip ;
 
 
 // PARSER
-data: INT | STRING | FLOAT | BOOL | list | dict | set;
-list: '[' (data (',' data)*)? ']' ;
+
 
 prog
 :	stmts EOF 
@@ -53,6 +52,9 @@ pure_stmt
 | var_decl 
 ;
 
+comment
+: START_COMMENT . 
+;
 code_block
 : '{' (func_stmt? NWLN)* func_stmt? '}'
 ;
@@ -76,8 +78,22 @@ return_type
 | '(' IDENT ',' TYPE ')' 
 ;
 
-comment
-: START_COMMENT . 
+data
+: INT 
+| STRING 
+| FLOAT 
+| BOOL 
+| list 
+| dict 
+| set
+;
+
+list
+: '[' (data (',' data)*)? ']' 
+;
+
+dict
+: '{' (var_decl (',' var_decl)*)? '}' 
 ;
 
 var_decl
