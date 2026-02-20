@@ -30,9 +30,9 @@ IDENT : [a-zA-Z]+  ;
 NWLN : '\r'? '\n' ;
 SPACE: (' '|'\r'|'\t'|'\u000C')+ -> skip ;
 // TODO: move to parser?
-// TODO: fix inline comments
-COMMENT: '/*' .*? '*/' ;
-INLINE_COMMENT: '#' .*? NWLN ; 
+
+COMMENT: '/*' .*? '*/' -> channel(HIDDEN) ;
+INLINE_COMMENT: '//' ~[\r\n]* -> channel(HIDDEN) ; 
 
 // PARSER
 prog
@@ -45,13 +45,7 @@ stmts
 ;
 
 stmt
-: pure_stmt comment?
-| comment
-;
-
-comment
-: COMMENT
-| INLINE_COMMENT
+: pure_stmt 
 ;
 
 pure_stmt
@@ -62,7 +56,7 @@ pure_stmt
 code_block
 : '{' (func_stmt NWLN)* '}'
 ;
-func_stmt: pure_func_stmt? comment? ;
+func_stmt: pure_func_stmt? ;
 
 pure_func_stmt: func_decl 
 | var_assign 
@@ -182,7 +176,6 @@ expr
 | var_ref '++'
 | var_ref '--'
 | expr '%' expr
-| expr '//' expr
 | expr '?' expr COLUMN expr
 | func_call
 | data
