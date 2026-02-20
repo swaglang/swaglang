@@ -1,7 +1,7 @@
 grammar gr;		
 
 // LEXER
-TYPE: ('int' | 'float' | 'string' | 'bool') ('[]')?;
+TYPE: ('int' | 'float' | 'string' | 'bool' | 'var') ('[]')? | 'void';
 COLUMN: ':' ;
 SEMICOL: ';' ;
 // L_BR: '{' ;
