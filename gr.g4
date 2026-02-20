@@ -85,6 +85,7 @@ data
 | BOOL 
 | list 
 | dict 
+// TODO: 
 // | set
 ;
 
@@ -93,7 +94,7 @@ list
 ;
 
 dict
-: '{' (dict_var_decl (',' dict_var_decl)*)? '}' 
+: '{' NWLN* (dict_var_decl (',' NWLN* dict_var_decl)*)? NWLN* '}' 
 ;
 
 dict_var_decl
