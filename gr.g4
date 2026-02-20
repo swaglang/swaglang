@@ -32,7 +32,7 @@ SPACE: (' '|'\r'|'\t'|'\u000C')+ -> skip ;
 // TODO: move to parser?
 // TODO: fix inline comments
 COMMENT: '/*' .*? '*/' -> skip;
-INLINE_COMMENT: '//' .*? NWLN; 
+INLINE_COMMENT: '#' .*? NWLN; 
 
 // PARSER
 prog
@@ -157,6 +157,8 @@ expr
 | expr (AND | OR | NOT) expr
 | expr ('>' | '<' | '=' | '>=' | '<=') expr
 | expr '++' | '++' expr
+| expr '%' expr
+| expr '//' expr
 | func_call
 | data
 | var_ref
