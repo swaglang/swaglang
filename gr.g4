@@ -21,7 +21,7 @@ BREAK: 'break' ;
 RETURN: 'return' ;
 ACCESS_MOD: 'const' | 'let' ;
 KEYWORD: FOR | ACCESS_MOD | IF | ELSE_IF | ELSE | TYPE | RETURN ;
-DATA: INT | STRING | FLOAT | BOOL ;
+DATA: INT | STRING | FLOAT | BOOL | '[' (DATA)* ']';
 STRING: '"' ( ~["\\\r\n] | '\\' . )* '"' ;
 INT: [0-9]+ ;
 FLOAT: [0-9]* '.' [0-9]+ ;
