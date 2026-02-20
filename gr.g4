@@ -180,6 +180,7 @@ expr
 | expr '++' | '++' expr
 | expr '%' expr
 | expr '//' expr
+| expr '?' expr COLUMN expr
 | func_call
 | data
 | var_ref
