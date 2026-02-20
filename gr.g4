@@ -116,7 +116,8 @@ var_decl
 ;
 
 var_assign
-: var_ref ('=' | '+=' | '-=' | '*=') data
+: var_ref ('=' | '+=' | '-=' | '*=') expr
+| '(' var_ref ',' var_ref ')' '=' func_call
 ;
 
 conditional_body
