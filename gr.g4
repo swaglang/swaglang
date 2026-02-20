@@ -85,7 +85,7 @@ break
 
 return
 : RETURN expr
-| RETURN IDENT, expr
+| RETURN IDENT ',' expr
 ;
 
 func_decl
