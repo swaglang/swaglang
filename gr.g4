@@ -98,12 +98,16 @@ dict_var_decl
 : IDENT (COLUMN TYPE)? '=' expr
 ;
 
+var_ref
+: IDENT ('[' (INT | STRING)? ']')*
+;
+
 var_decl
 : ACCESS_MOD IDENT (COLUMN TYPE)? '=' expr 
 ;
 
 var_assign
-: IDENT ('=' | '+=' | '-=' | '*=') data
+: var_ref ('=' | '+=' | '-=' | '*=') data
 ;
 
 conditional_body
