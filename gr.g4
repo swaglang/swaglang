@@ -85,7 +85,7 @@ data
 | BOOL 
 | list 
 | dict 
-| set
+// | set
 ;
 
 list
@@ -97,7 +97,7 @@ dict
 ;
 
 var_decl
-: ACCESS_MOD IDENT COLUMN TYPE '=' expr 
+: ACCESS_MOD IDENT (COLUMN TYPE)? '=' expr 
 ;
 
 var_assign
