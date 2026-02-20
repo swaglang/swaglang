@@ -15,10 +15,11 @@ func_stmt: func_decl
          | loop 
          | conditional 
          | BREAK
+         | RETURN expr
          ;
 
 func_decl: return_type IDENT '(' (param_decl)* ')' 
-'{' func_body RETURN expr NWLN? '}' ;
+'{' func_body NWLN? '}' ;
 return_type: TYPE
            | '(' ERR_TYPE ',' TYPE ')' ;
 
