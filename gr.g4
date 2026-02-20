@@ -15,7 +15,6 @@ func_stmt: func_decl
          | loop 
          | conditional 
          | BREAK
-         // | expr
          ;
 
 last_stmt: func_decl
@@ -23,7 +22,6 @@ last_stmt: func_decl
          ;
 comment: START_COMMENT . ;
 code_block: '{' stmts '}' ;
-// var_decl: ACCESS_MOD IDENT ':' 'int' '=' expr ;
 var_decl: ACCESS_MOD IDENT COLUMN TYPE '=' expr ;
 var_assign: IDENT '=' DATA;
 
@@ -44,23 +42,7 @@ forin: FOR IDENT IN (func_call | IDENT );
 conditional: IF condition conditional_body 
             (ELSE_IF condition conditional_body)*
             (ELSE conditional_body)? ;
-
-// condition: '(' expr '}';
 condition: expr;
-// bool: expr (AND | OR | NOT) expr ;
-// add: expr ('+'|'-') expr ;
-// mult: expr ('*'|'/') expr ;
-// comp: expr ('>' | '<' | '=' | '>=' | '<=') expr ;
-//expr:
-//    mult
-//    | add
-//    | bool
-//    | comp
-//|   | DATA
-//    | IDENT
-//    | func_call
-//    |	'(' expr ')'
-//    ;
 expr: expr '**' expr
     | expr ('*'|'/') expr
     | expr ('+'|'-') expr
@@ -118,7 +100,7 @@ FLOAT: [0-9]* '.' [0-9]+ ;
 BOOL: 'true'
     | 'false'
     ;
-ERR_TYPE: 'error' ;
+ERR_TYPE: IDENT ;
 
 IDENT : [a-zA-Z]+  ; 
 
