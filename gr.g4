@@ -139,7 +139,7 @@ for_loop
 ;
 
 forin
-: FOR IDENT IN (func_call | IDENT )
+: FOR IDENT IN (func_call | var_ref )
 ;
 
 conditional
@@ -159,7 +159,7 @@ expr
 | expr '++' | '++' expr
 | func_call
 | data
-| IDENT
+| var_ref
 |	'(' expr ')'
 ;	
 
