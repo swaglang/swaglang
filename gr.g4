@@ -126,11 +126,12 @@ var_ref
 
 var_decl
 : ACCESS_MOD IDENT (COLUMN TYPE)? '=' expr 
+| ACCESS_MOD IDENT ',' IDENT '=' func_call
 ;
 
 var_assign
 : var_ref ('=' | '+=' | '-=' | '*=') expr
-| '(' var_ref ',' var_ref ')' '=' func_call
+|  var_ref ',' var_ref '=' func_call
 ;
 
 conditional_body
