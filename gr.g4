@@ -31,8 +31,8 @@ NWLN : '\r'? '\n' ;
 SPACE: (' '|'\r'|'\t'|'\u000C')+ -> skip ;
 // TODO: move to parser?
 // TODO: fix inline comments
-COMMENT: '/*' .*? '*/' -> skip;
-INLINE_COMMENT: '#' .*? NWLN; 
+COMMENT: '/*' .*? '*/' ;
+INLINE_COMMENT: '#' .*? NWLN ; 
 
 // PARSER
 prog
@@ -45,7 +45,12 @@ stmts
 ;
 
 stmt
-: pure_stmt?
+: pure_stmt? comment?
+;
+
+comment
+: COMMENT
+| INLINE_COMMENT
 ;
 
 pure_stmt
@@ -56,8 +61,9 @@ pure_stmt
 code_block
 : '{' (func_stmt? NWLN)* func_stmt? '}'
 ;
+func_stmt: pure_func_stmt? comment? ;
 
-func_stmt: func_decl 
+pure_func_stmt: func_decl 
 | var_assign 
 | func_call 
 | var_decl 
@@ -66,6 +72,7 @@ func_stmt: func_decl
 | BREAK
 | RETURN expr
 | DEFER expr
+| expr
 ;
 
 func_decl
@@ -93,10 +100,10 @@ list
 ;
 
 dict
-: '{' NWLN* (dict_var_decl (',' NWLN* dict_var_decl)*)? NWLN* '}' 
+: '{' NWLN* (no_acs_mode_var_decl (',' NWLN* no_acs_mode_var_decl)*)? NWLN* '}' 
 ;
 
-dict_var_decl
+no_acs_mode_var_decl
 : IDENT (COLUMN TYPE)? '=' expr
 ;
 
@@ -135,7 +142,7 @@ do_while_loop
 ;
 
 for_loop
-: (FOR (var_decl? ';' condition? ';' expr? ) | forin) loop_body 
+: (FOR (no_acs_mode_var_decl? ';' condition? ';' expr? ) | forin) loop_body 
 ;
 
 forin
