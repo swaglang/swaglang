@@ -1,5 +1,6 @@
 grammar gr;		
 prog:	stmts EOF ;
+// TODO: deal with NWLN statment junk
 stmts: (stmt? NWLN)* stmt? ;
 stmt: pure_stmt? comment? ;
 
@@ -7,7 +8,7 @@ pure_stmt: func_decl
          | var_decl 
          ;
 
-func_body: (func_stmt? NWLN)* func_stmt? ;
+code_block: (func_stmt? NWLN)* func_stmt? ;
 func_stmt: func_decl 
          | var_assign 
          | func_call 
@@ -18,14 +19,12 @@ func_stmt: func_decl
          | RETURN expr
          ;
 
-func_decl: return_type IDENT '(' (param_decl)* ')' 
-'{' func_body '}' ;
+func_decl: return_type IDENT '(' (param_decl)* ')' code_block;
 return_type: TYPE
            | '(' ERR_TYPE ',' TYPE ')' ;
 
 
 comment: START_COMMENT . ;
-code_block: '{' stmts '}' ;
 var_decl: ACCESS_MOD IDENT COLUMN TYPE '=' expr ;
 var_assign: IDENT '=' DATA;
 
