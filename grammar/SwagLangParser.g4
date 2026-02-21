@@ -142,19 +142,19 @@ condition
     ;
 
 expr
-    : expr EXP expr
-    | expr (MUL|DIV) expr
-    | expr (PLUS|MINUS) expr
-    | expr (AND | OR | NOT) expr
-    | expr (GT | LT | EQ | GTE | LTE | NEQ) expr
-    | var_ref INC
-    | var_ref DEC
-    | expr MOD expr
-    | expr QUESTION expr COLUMN expr
-    | func_call
+    : L_PAREN expr R_PAREN
     | data
+    | func_call
     | var_ref
-    | L_PAREN expr R_PAREN
+    | var_ref (INC | DEC)
+    | NOT expr
+    | <assoc=right> expr EXP expr
+    | expr (MUL | DIV | MOD) expr
+    | expr (PLUS | MINUS) expr
+    | expr (GT | LT | EQ | GTE | LTE | NEQ) expr
+    | expr AND expr
+    | expr OR expr
+    | expr QUESTION expr COLUMN expr
     ;
 
 func_call
