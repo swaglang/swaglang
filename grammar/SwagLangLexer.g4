@@ -64,4 +64,4 @@ BOOL   : 'true' | 'false';
 NWLN           : '\r'? '\n';
 SPACE          : (' '|'\r'|'\t'|'\u000C')+ -> skip;
 COMMENT        : '/*' .*? '*/' -> channel(HIDDEN);
-INLINE_COMMENT : '//' ~[\r\n]* -> channel(HIDDEN); 
+INLINE_COMMENT : '//' ~[\r\n]* -> channel(HIDDEN);
