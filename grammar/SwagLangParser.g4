@@ -5,7 +5,7 @@ options {
 }
 
 prog
-    : stmts EOF 
+    : stmts EOF
     ;
 
 // TODO: deal with NWLN statement junk
@@ -14,12 +14,12 @@ stmts
     ;
 
 stmt
-    : pure_stmt 
+    : pure_stmt
     ;
 
 pure_stmt
-    : func_decl 
-    | var_decl 
+    : func_decl
+    | var_decl
     ;
 
 code_block
@@ -31,12 +31,12 @@ func_stmt
     ;
 
 pure_func_stmt
-    : func_decl 
-    | var_assign 
-    | func_call 
-    | var_decl 
-    | loop 
-    | conditional 
+    : func_decl
+    | var_assign
+    | func_call
+    | var_decl
+    | loop
+    | conditional
     | break
     | return
     | defer
@@ -62,27 +62,27 @@ func_decl
 
 return_type
     : TYPE
-    | L_PAREN IDENT COMMA TYPE R_PAREN 
+    | L_PAREN IDENT COMMA TYPE R_PAREN
     ;
 
 data
-    : INT 
-    | STRING 
-    | FLOAT 
-    | BOOL 
-    | list 
-    | dict 
-    // TODO: 
+    : INT
+    | STRING
+    | FLOAT
+    | BOOL
+    | list
+    | dict
+    // TODO:
     // | set
     ;
 
 list
     // TODO: multi-line lists
-    : L_BRACKET (data (COMMA data)*)? R_BRACKET 
+    : L_BRACKET (data (COMMA data)*)? R_BRACKET
     ;
 
 dict
-    : L_CURLY NWLN* (no_acs_mode_var_decl (COMMA NWLN* no_acs_mode_var_decl)*)? NWLN* R_CURLY 
+    : L_CURLY NWLN* (no_acs_mode_var_decl (COMMA NWLN* no_acs_mode_var_decl)*)? NWLN* R_CURLY
     ;
 
 no_acs_mode_var_decl
@@ -94,7 +94,7 @@ var_ref
     ;
 
 var_decl
-    : ACCESS_MOD IDENT (COLUMN TYPE)? ASSIGN expr 
+    : ACCESS_MOD IDENT (COLUMN TYPE)? ASSIGN expr
     | ACCESS_MOD IDENT COMMA IDENT ASSIGN func_call
     ;
 
@@ -118,15 +118,15 @@ loop
     ;
 
 while_loop
-    : WHILE condition loop_body 
+    : WHILE condition loop_body
     ;
 
 do_while_loop
-    : DO  loop_body  WHILE L_PAREN condition R_PAREN 
+    : DO  loop_body  WHILE L_PAREN condition R_PAREN
     ;
 
 for_loop
-    : (FOR (no_acs_mode_var_decl? SEMICOL condition? SEMICOL expr? ) | forin) loop_body 
+    : (FOR (no_acs_mode_var_decl? SEMICOL condition? SEMICOL expr? ) | forin) loop_body
     ;
 
 forin
@@ -134,7 +134,7 @@ forin
     ;
 
 conditional
-    : IF condition conditional_body (ELSE_IF condition conditional_body)* (ELSE conditional_body)? 
+    : IF condition conditional_body (ELSE_IF condition conditional_body)* (ELSE conditional_body)?
     ;
 
 condition
@@ -155,16 +155,16 @@ expr
     | data
     | var_ref
     | L_PAREN expr R_PAREN
-    ;	
+    ;
 
 func_call
-    : IDENT L_PAREN params R_PAREN 
+    : IDENT L_PAREN params R_PAREN
     ;
 
 param_decl
-    : IDENT COLUMN TYPE 
+    : IDENT COLUMN TYPE
     ;
 
 params
-    : (expr (COMMA expr )*)? 
+    : (expr (COMMA expr )*)?
     ;
