@@ -52,7 +52,8 @@ break
     ;
 
 return
-    : RETURN expr
+    : RETURN
+    | RETURN expr
     | RETURN expr COMMA expr
     ;
 
