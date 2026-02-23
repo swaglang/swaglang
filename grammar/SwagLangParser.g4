@@ -58,7 +58,7 @@ return
     ;
 
 func_decl
-    : return_type IDENT L_PAREN (param_decl (COMMA param_decl)*)? R_PAREN code_block
+    : return_type IDENT L_PAREN (param_decl (COMMA param_decl)* COMMA?)? R_PAREN code_block
     ;
 
 return_type
@@ -79,11 +79,11 @@ data
 
 list
     // TODO: multi-line lists
-    : L_BRACKET (data (COMMA data)*)? R_BRACKET
+    : L_BRACKET (data (COMMA data)* COMMA?)? R_BRACKET
     ;
 
 dict
-    : L_CURLY NWLN* (no_acs_mode_var_decl (COMMA NWLN* no_acs_mode_var_decl)*)? NWLN* R_CURLY
+    : L_CURLY NWLN* (no_acs_mode_var_decl (COMMA NWLN* no_acs_mode_var_decl)* COMMA?)? NWLN* R_CURLY
     ;
 
 no_acs_mode_var_decl
@@ -167,5 +167,5 @@ param_decl
     ;
 
 params
-    : (expr (COMMA expr )*)?
+    : (expr (COMMA expr )* COMMA?)?
     ;
