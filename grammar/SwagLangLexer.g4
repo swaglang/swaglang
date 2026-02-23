@@ -1,9 +1,9 @@
 lexer grammar SwagLangLexer;
 
 // Keywords
-TYPE       : ('int' | 'float' | 'string' | 'bool' | 'var') ('[]')? | 'void';
+TYPE       : ('int' | 'float' | 'string' | 'bool') ('[]')? | 'void';
 IF         : 'if';
-ELSE_IF    : 'else' 'if';
+ELSE_IF    : 'else' SPACE+ 'if';
 ELSE       : 'else';
 FOR        : 'for';
 IN         : 'in';
@@ -13,6 +13,7 @@ BREAK      : 'break';
 RETURN     : 'return';
 DEFER      : 'defer';
 ACCESS_MOD : 'const' | 'let';
+BOOL       : 'true' | 'false';
 
 IDENT: [a-zA-Z]+;
 
@@ -58,7 +59,6 @@ MINUS      : '-';
 STRING : '"' ( ~["\\\r\n] | '\\' . )* '"';
 INT    : '-'?[0-9]+;
 FLOAT  : '-'?[0-9]* '.' [0-9]+;
-BOOL   : 'true' | 'false';
 
 // Hidden tokens
 NWLN           : '\r'? '\n';

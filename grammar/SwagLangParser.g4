@@ -58,7 +58,7 @@ return
     ;
 
 func_decl
-    : return_type IDENT L_PAREN (param_decl)* R_PAREN code_block
+    : return_type IDENT L_PAREN (param_decl (COMMA param_decl)*)? R_PAREN code_block
     ;
 
 return_type
