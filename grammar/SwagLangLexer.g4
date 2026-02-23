@@ -1,7 +1,7 @@
 lexer grammar SwagLangLexer;
 
 // Keywords
-TYPE       : ('int' | 'float' | 'string' | 'bool' | 'var') ('[]')? | 'void';
+TYPE       : ('int' | 'float' | 'string' | 'bool') ('[]')? | 'void';
 IF         : 'if';
 ELSE_IF    : 'else' 'if';
 ELSE       : 'else';
