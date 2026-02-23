@@ -3,7 +3,7 @@ lexer grammar SwagLangLexer;
 // Keywords
 TYPE       : ('int' | 'float' | 'string' | 'bool') ('[]')? | 'void';
 IF         : 'if';
-ELSE_IF    : 'else' 'if';
+ELSE_IF    : 'else' SPACE+ 'if';
 ELSE       : 'else';
 FOR        : 'for';
 IN         : 'in';
