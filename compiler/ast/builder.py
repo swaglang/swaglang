@@ -1,9 +1,17 @@
-from compiler.lexer import SwagLangParser
+from compiler.lexer.SwagLangParser import SwagLangParser
 from compiler.lexer.SwagLangParserVisitor import SwagLangParserVisitor
-from compiler.ast.nodes import AccessMod, ArrayType, AssignOp, BaseType, BinaryExpr, BinaryOp, BoolLiteral, Break, CodeBlock, Defer, DictLiteral, DoWhileLoop, ElifClause, FieldAccessor, FloatLiteral, ForInLoop, ForLoop, FuncCall, FuncDecl, IfElse, IndexAccessor, IntLiteral, ListLiteral, MultiReturnType, MultiVarAssign, MultiVarDecl, NoAcsModeVarDecl, ParamDecl, PostfixExpr, PostfixOp, Prog, Return, SingleReturnType, StringLiteral, TernaryExpr, UnaryExpr, UnaryOp, VarAssign, VarDecl, VarRef, VoidReturnType, WhileLoop
+from compiler.ast.nodes import (
+    AccessMod, ArrayType, AssignOp, BaseType, BinaryExpr, BinaryOp, BoolLiteral,
+    Break, CodeBlock, Data, Defer, DictLiteral, DoWhileLoop, ElifClause, Expr,
+    FieldAccessor, FloatLiteral, ForInLoop, ForLoop, FuncCall, FuncDecl, IfElse,
+    IndexAccessor, IntLiteral, ListLiteral, MultiReturnType, MultiVarAssign,
+    MultiVarDecl, NoAcsModeVarDecl, ParamDecl, PostfixExpr, PostfixOp, Prog,
+    Return, ReturnType, SingleReturnType, StringLiteral, TernaryExpr, Type,
+    UnaryExpr, UnaryOp, VarAssign, VarDecl, VarRef, VoidReturnType, WhileLoop
+)
 
 class ASTBuilder(SwagLangParserVisitor):
-    def visitProg(self, ctx):
+    def visitProg(self, ctx) -> Prog:
         stmts_ctx = ctx.stmts()
         stmts = [
             self.visit(s) for s in stmts_ctx.stmt()
@@ -11,25 +19,25 @@ class ASTBuilder(SwagLangParserVisitor):
         ]
         return Prog(stmts=[s for s in stmts if s is not None])
 
-    def visitStmt(self, ctx):
+    def visitStmt(self, ctx) -> None:
         return self.visit(ctx.pure_stmt())
 
-    def visitPure_stmt(self, ctx):
+    def visitPure_stmt(self, ctx) -> None:
         return self.visitChildren(ctx)
 
-    def visitFunc_stmt(self, ctx):
+    def visitFunc_stmt(self, ctx) -> None:
         if ctx.pure_func_stmt():
             return self.visit(ctx.pure_func_stmt())
         return None
 
-    def visitPure_func_stmt(self, ctx):
+    def visitPure_func_stmt(self, ctx) -> None:
         return self.visitChildren(ctx)
 
     def visitCode_block(self, ctx):
         stmts = [self.visit(s) for s in ctx.func_stmt()]
         return CodeBlock(func_stmts=[s for s in stmts if s is not None])
 
-    def visitFunc_decl(self, ctx):
+    def visitFunc_decl(self, ctx) -> FuncDecl:
         return FuncDecl(
             return_type=self.visit(ctx.return_type()),
             name=ctx.IDENT().getText(),
@@ -37,7 +45,7 @@ class ASTBuilder(SwagLangParserVisitor):
             body=self.visit(ctx.code_block())
         )
 
-    def visitReturn_type(self, ctx):
+    def visitReturn_type(self, ctx) -> ReturnType:
         if ctx.L_PAREN():
             return MultiReturnType(
                 err=ctx.IDENT().getText(),
@@ -49,13 +57,13 @@ class ASTBuilder(SwagLangParserVisitor):
         return SingleReturnType(type_ann=self._parse_type(raw))
 
 
-    def visitParam_decl(self, ctx):
+    def visitParam_decl(self, ctx) -> ParamDecl:
         return ParamDecl(
             name=ctx.IDENT().getText(),
             type_ann=self._parse_type(ctx.TYPE().getText())
         )
 
-    def visitVar_decl(self, ctx):
+    def visitVar_decl(self, ctx) -> VarDecl | MultiVarDecl:
         mod = AccessMod(ctx.ACCESS_MOD().getText())
         idents = ctx.IDENT()
         if len(idents) == 2:
@@ -72,14 +80,14 @@ class ASTBuilder(SwagLangParserVisitor):
             val=self.visit(ctx.expr())
         )
 
-    def visitNo_acs_mode_var_decl(self, ctx):
+    def visitNo_acs_mode_var_decl(self, ctx) -> NoAcsModeVarDecl:
         return NoAcsModeVarDecl(
             name=ctx.IDENT().getText(),
             type_ann=self._parse_type(ctx.TYPE().getText()) if ctx.TYPE() else None,
             val=self.visit(ctx.expr())
         )
 
-    def visitVar_assign(self, ctx):
+    def visitVar_assign(self, ctx) -> VarAssign | MultiVarAssign:
         var_refs = ctx.var_ref()
 
         if len(var_refs) == 2:
@@ -100,7 +108,7 @@ class ASTBuilder(SwagLangParserVisitor):
             val=self.visit(ctx.expr())
         )
 
-    def visitVar_ref(self, ctx):
+    def visitVar_ref(self, ctx) -> VarRef:
         name = ctx.IDENT().getText()
         accessors = []
         children = list(ctx.getChildren())
@@ -122,7 +130,7 @@ class ASTBuilder(SwagLangParserVisitor):
 
         return VarRef(name=name, accessors=accessors)
 
-    def visitData(self, ctx):
+    def visitData(self, ctx) -> Data:
         if ctx.INT():
             return IntLiteral(val=int(ctx.INT().getText()))
         if ctx.STRING():
@@ -136,13 +144,13 @@ class ASTBuilder(SwagLangParserVisitor):
         if ctx.dict_():
             return self.visit(ctx.dict_())
 
-    def visitList(self, ctx):
+    def visitList(self, ctx) -> ListLiteral:
         return ListLiteral(elements = [self.visit(f) for f in ctx.data()])
 
-    def visitDict(self, ctx):
+    def visitDict(self, ctx) -> DictLiteral:
         return DictLiteral(fields = [self.visit(f) for f in ctx.no_acs_mode_var_decl()])
 
-    def visitExpr(self, ctx):
+    def visitExpr(self, ctx) -> Expr:
         n = ctx.getChildCount()
 
         # parentheses
@@ -191,16 +199,16 @@ class ASTBuilder(SwagLangParserVisitor):
 
         return self.visitChildren(ctx)
 
-    def visitFunc_call(self, ctx):
+    def visitFunc_call(self, ctx) -> FuncCall:
         return FuncCall(
             func=ctx.IDENT().getText(),
             args=[self.visit(e) for e in ctx.params().expr()] if ctx.params() else [],
         )
 
-    def visitCondition(self, ctx):
+    def visitCondition(self, ctx) -> None:
         return self.visit(ctx.expr())
 
-    def visitConditional(self, ctx):
+    def visitConditional(self, ctx) -> IfElse:
         conditions = ctx.condition()
         bodies = ctx.conditional_body()
 
@@ -225,13 +233,13 @@ class ASTBuilder(SwagLangParserVisitor):
             body=self.visit(ctx.loop_body().code_block())
         )
 
-    def visitDo_while_loop(self, ctx):
+    def visitDo_while_loop(self, ctx) -> WhileLoop:
         return DoWhileLoop(
             body=self.visit(ctx.loop_body().code_block()),
             condition=self.visit(ctx.condition().expr())
         )
 
-    def visitFor_loop(self, ctx):
+    def visitFor_loop(self, ctx) -> ForLoop | ForInLoop:
         if ctx.forin():
             forin = ctx.forin()
             return ForInLoop(
@@ -247,10 +255,10 @@ class ASTBuilder(SwagLangParserVisitor):
             body=self.visit(ctx.loop_body().code_block())
         )
 
-    def visitBreak(self, ctx):
+    def visitBreak(self, _) -> Break:
         return Break()
 
-    def visitReturn(self, ctx):
+    def visitReturn(self, ctx) -> Return:
         exprs = ctx.expr()
         if not exprs:
             return Return()
@@ -261,16 +269,16 @@ class ASTBuilder(SwagLangParserVisitor):
             )
         return Return(val=self.visit(exprs[0]))
 
-    def visitDefer(self, ctx):
+    def visitDefer(self, ctx) -> Defer:
         return Defer(expr=self.visit(ctx.expr()))
 
-    def _parse_type(self, text: str):
+    def _parse_type(self, text: str) -> Type:
         try:
             return ArrayType(text)
         except ValueError:
             return BaseType(text)
 
-    def _parse_scalar_literal(self, text: str):
+    def _parse_scalar_literal(self, text: str) -> IntLiteral | StringLiteral:
         if text.startswith('"'):
             return StringLiteral(val=text[1:-1])
         return IntLiteral(val=int(text))
