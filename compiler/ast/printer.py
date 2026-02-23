@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from compiler.ast.nodes import (
     ASTNode, Prog, CodeBlock, FuncDecl,
     SingleReturnType, MultiReturnType, VoidReturnType, ParamDecl,
@@ -10,21 +11,29 @@ from compiler.ast.nodes import (
     IfElse, Break, Return, Defer,
 )
 
-def print_ast(node: ASTNode, indent: int = 0) -> None:
-    p = " " * indent
+@dataclass
+class _Label(ASTNode):
+    label: str
+    child: ASTNode
 
+def print_ast(node: ASTNode) -> None:
+    _print(node, prefix="", is_last=True)
+
+def _print(node: ASTNode, prefix: str, is_last: bool) -> None:
+    connector = "└ " if is_last else "├ "
+    print(prefix + connector + _label(node))
+    children = _children(node)
+    new_prefix = prefix + ("  " if is_last else "│ ")
+    for i, child in enumerate(children):
+        _print(child, new_prefix, i == len(children) - 1)
+
+def _label(node: ASTNode) -> str:
     match node:
-        case Prog(stmts=stmts):
-            print(f"{p}Prog")
-            for s in stmts:
-                print_ast(s, indent + 1)
-
-        case CodeBlock(func_stmts=stmts):
-            print(f"{p}CodeBlock")
-            for s in stmts:
-                print_ast(s, indent + 1)
-
-        case FuncDecl(return_type=rt, name=name, params=params, body=body):
+        case Prog():
+            return "Prog"
+        case CodeBlock():
+            return "CodeBlock"
+        case FuncDecl(name=name, return_type=rt):
             match rt:
                 case VoidReturnType():
                     rt_str = "void"
@@ -32,125 +41,47 @@ def print_ast(node: ASTNode, indent: int = 0) -> None:
                     rt_str = t.value if t else "void"
                 case MultiReturnType(err=e, value_type=t):
                     rt_str = f"({e}, {t.value})"
-            print(f"{p}FuncDecl: {name} -> {rt_str}")
-            for param in params:
-                print_ast(param, indent + 1)
-            print_ast(body, indent + 1)
-
+            return f"FuncDecl: {name} -> {rt_str}"
         case ParamDecl(name=name, type_ann=t):
-            print(f"{p}ParamDecl: {name}: {t.value}")
-
+            return f"ParamDecl: {name}: {t.value}"
         case VarDecl(access_mod=mod, name=name, type_ann=t, val=val):
             t_str = f"{t.value}" if t else "inferred"
-            print(f"{p}VarDecl: {mod.value} {name}: {t_str}")
-            print_ast(val, indent + 1)
-
+            return f"VarDecl: {mod.value} {name}: {t_str}"
         case MultiVarDecl(access_mod=mod, names=names, val=val):
-            print(f"{p}MultiVarDecl: {mod.value} {', '.join(names)}")
-            print_ast(val, indent + 1)
-
+            return f"MultiVarDecl: {mod.value} {', '.join(names)}"
         case NoAcsModeVarDecl(name=name, type_ann=t, val=val):
             t_str = f"{t.value}" if t else "inferred"
-            print(f"{p}Field: {name}: {t_str}")
-            print_ast(val, indent + 1)
-
-        case VarAssign(var=var, op=op, val=val):
-            print(f"{p}VarAssign: {op.value}")
-            print_ast(var, indent + 1)
-            print_ast(val, indent + 1)
-
-        case MultiVarAssign(vars=vars, val=val):
-            print(f"{p}MultiVarAssign")
-            for v in vars:
-                print_ast(v, indent + 1)
-            print_ast(val, indent + 1)
-
-        case IfElse(condition=cond, if_body=if_body, elif_clauses=elifs, else_body=eb):
-            print(f"{p}IfElse")
-            print(f"{p} Condition:")
-            print_ast(cond, indent + 2)
-            print(f"{p} If Body:")
-            print_ast(if_body, indent + 2)
-            for clause  in elifs:
-                print(f"{p} Elif Clause:")
-                print_ast(clause.condition, indent + 2)
-                print_ast(clause.body, indent + 2)
-            if eb:
-                print(f"{p} Else Body:")
-                print_ast(eb, indent + 2)
-
-        case WhileLoop(condition=cond, body=body):
-            print(f"{p}WhileLoop")
-            print(f"{p} Condition:")
-            print_ast(cond, indent + 2)
-            print_ast(body, indent + 1)
-
-        case DoWhileLoop(body=body, condition=cond):
-            print(f"{p}DoWhileLoop")
-            print_ast(body, indent + 1)
-            print(f"{p} Condition:")
-            print_ast(cond, indent + 2)
-
-        case ForLoop(init=init, condition=cond, update=update, body=body):
-            print(f"{p}ForLoop")
-            if init:
-                print(f"{p} Init:")
-                print_ast(init, indent + 2)
-            if cond:
-                print(f"{p} Condition:")
-                print_ast(cond, indent + 2)
-            if update:
-                print(f"{p} Update:")
-                print_ast(update, indent + 2)
-            print_ast(body, indent + 1)
-
-        case ForInLoop(var=var, iterable=iterable, body=body):
-            print(f"{p}ForInLoop: {var} in")
-            print_ast(iterable, indent + 1)
-            print_ast(body, indent + 1)
-
+            return f"Field: {name}: {t_str}"
+        case VarAssign(op=op):
+            return f"VarAssign: {op.value}"
+        case MultiVarAssign():
+            return "MultiVarAssign"
+        case IfElse():
+            return "IfElse"
+        case WhileLoop():
+            return "WhileLoop"
+        case DoWhileLoop():
+            return "DoWhileLoop"
+        case ForLoop():
+            return "ForLoop"
+        case ForInLoop(var=var):
+            return f"ForInLoop: {var} in"
         case Break():
-            print(f"{p}Break")
-
-        case Return(error=e, val=v):
-            print(f"{p}Return")
-            if e:
-                print(f"{p} Error:")
-                print_ast(e, indent + 2)
-            if v:
-                print_ast(v, indent + 1)
-
-        case Defer(expr=e):
-            print(f"{p}Defer")
-            print_ast(e, indent + 1)
-
-        case BinaryExpr(left=l, op=op, right=r):
-            print(f"{p}BinaryExpr: {op.value}")
-            print_ast(l, indent + 1)
-            print_ast(r, indent + 1)
-
-        case UnaryExpr(op=op, operand=operand):
-            print(f"{p}UnaryExpr: {op.value}")
-            print_ast(operand, indent + 1)
-
-        case PostfixExpr(operand=operand, op=op):
-            print(f"{p}PostfixExpr: {op.value}")
-            print_ast(operand, indent + 1)
-
-        case TernaryExpr(condition=cond, true_expr=true, false_expr=false):
-            print(f"{p}TernaryExpr")
-            print(f"{p} Condition:")
-            print_ast(cond, indent + 2)
-            print(f"{p} True Expr:")
-            print_ast(true, indent + 2)
-            print(f"{p} False Expr:")
-            print_ast(false, indent + 2)
-
-        case FuncCall(func=func, args=args):
-            print(f"{p}FuncCall: {func}")
-            for a in args:
-                print_ast(a, indent + 1)
-
+            return "Break"
+        case Return():
+            return "Return"
+        case Defer():
+            return "Defer"
+        case BinaryExpr(op=op):
+            return f"BinaryExpr: {op.value}"
+        case UnaryExpr(op=op):
+            return f"UnaryExpr: {op.value}"
+        case PostfixExpr(op=op):
+            return f"PostfixExpr: {op.value}"
+        case TernaryExpr():
+            return "TernaryExpr"
+        case FuncCall(func=func):
+            return f"FuncCall: {func}"
         case VarRef(name=name, accessors=accessors):
             acc_str = ""
             for a in accessors:
@@ -159,29 +90,113 @@ def print_ast(node: ASTNode, indent: int = 0) -> None:
                         acc_str += f"[{i.val if i else ''}]"
                     case FieldAccessor(field=f):
                         acc_str += f".{f.name}"
-            print(f"{p}VarRef: {name}{acc_str}")
-
-        case ListLiteral(elements=elements):
-            print(f"{p}ListLiteral")
-            for e in elements:
-                print_ast(e, indent + 1)
-
-        case DictLiteral(fields=fields):
-            print(f"{p}DictLiteral")
-            for f in fields:
-                print_ast(f, indent + 1)
-
+            return f"VarRef: {name}{acc_str}"
+        case ListLiteral():
+            return "ListLiteral"
+        case DictLiteral():
+            return "DictLiteral"
         case IntLiteral(val=val):
-            print(f"{p}IntLiteral: {val}")
-
+            return f"IntLiteral: {val}"
         case FloatLiteral(val=val):
-            print(f"{p}FloatLiteral: {val}")
-
+            return f"FloatLiteral: {val}"
         case StringLiteral(val=val):
-            print(f"{p}StringLiteral: {val}")
-
+            return f"StringLiteral: {val}"
         case BoolLiteral(val=val):
-            print(f"{p}BoolLiteral: {'true' if val else 'false'}")
-
+            return f"BoolLiteral: {'true' if val else 'false'}"
+        case _Label(label=label):
+            return label
         case _:
-            print(f"{p}~~~unknown: {type(node).__name__}~~~")
+            return f"~~~unknown: {type(node).__name__}~~~"
+
+def _children(node: ASTNode) -> list[ASTNode]:
+    match node:
+        case Prog(stmts=stmts):
+            return stmts
+        case CodeBlock(func_stmts=stmts):
+            return stmts
+        case FuncDecl(params=params, body=body):
+            return params + [body]
+        case ParamDecl():
+            return []
+        case VarDecl(val=val):
+            return [val]
+        case MultiVarDecl(val=val):
+            return [val]
+        case NoAcsModeVarDecl(val=val):
+            return [val]
+        case VarAssign(var=var, val=val):
+            return [var, val]
+        case MultiVarAssign(vars=vars, val=val):
+            return vars + [val]
+        case IfElse(condition=cond, if_body=if_body, elif_clauses=elifs, else_body=eb):
+            children = [
+                _Label("Condition", cond),
+                _Label("If Body", if_body),
+            ]
+            for clause in elifs:
+                children += [
+                    _Label("Elif Condition", clause.condition),
+                    _Label("Elif Body", clause.body),
+                ]
+            if eb:
+                children.append(_Label("Else Body", eb))
+            return children
+        case WhileLoop(condition=cond, body=body):
+            return [_Label("Condition", cond), _Label("Body", body)]
+        case DoWhileLoop(body=body, condition=cond):
+            return [_Label("Body", body), _Label("Condition", cond)]
+        case ForLoop(init=init, condition=cond, update=update, body=body):
+            children = []
+            if init:
+                children.append(_Label("Init", init))
+            if cond:
+                children.append(_Label("Condition", cond))
+            if update:
+                children.append(_Label("Update", update))
+            children.append(_Label("Body", body))
+            return children
+        case ForInLoop(iterable=iterable, body=body):
+            return [iterable, body]
+        case Break():
+            return []
+        case Return(error=e, val=v):
+            children = []
+            if e:
+                children.append(_Label("Error", e))
+            if v:
+                children.append(_Label("Value", v))
+            return children
+        case Defer(expr=e):
+            return [e]
+        case BinaryExpr(left=l, right=r):
+            return [l, r]
+        case UnaryExpr(operand=operand):
+            return [operand]
+        case PostfixExpr(operand=operand):
+            return [operand]
+        case TernaryExpr(condition=cond, true_expr=true, false_expr=false):
+            return [
+                _Label("Condition", cond),
+                _Label("True", true),
+                _Label("False", false),
+            ]
+        case FuncCall(args=args):
+            return args
+        case VarRef():
+            return []
+        case ListLiteral(elements=elements):
+            return elements
+        case DictLiteral(fields=fields):
+            return fields
+        case IntLiteral():
+            return []
+        case FloatLiteral():
+            return []
+        case StringLiteral():
+            return []
+        case BoolLiteral():
+            return []
+        case _Label(child=child):
+            return [child]
+        case _:
+            return []
