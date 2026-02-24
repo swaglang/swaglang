@@ -84,7 +84,7 @@ class SwagErrorListener(ErrorListener):
         self._token_names: dict[str, str] = {**self.TOKEN_NAMES, **(extra_token_names or {})}
         self.errors: list[SwagError] = []
 
-    def syntaxError(self, recognizer, baddieSymbol, line, column, msg, e):
+    def syntaxError(self, recognizer, baddieSymbol, line: int, column: int, msg: str, e) -> None:
         """
         recognizer: parser
         baddieSymbol: Token (maybe None or a token object)
@@ -93,7 +93,13 @@ class SwagErrorListener(ErrorListener):
         e: RecognitionException or None
         """
 
-        off_text = None
-        expected_desc = None
-
-        off_text = self.baddie_text_from_symbol(baddieSymbol)
+        kind, text = self._classify(msg, recognizer)
+        error = SwagError(
+            kind=kind,
+            filename=self.filename,
+            line=line,
+            column=column,
+            message=f"[{kind}] {self.filename}:{line}:{column} - {text}",
+        )
+        self.errors.append(error)
+        print(error)
