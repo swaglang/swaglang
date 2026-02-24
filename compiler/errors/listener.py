@@ -1,15 +1,18 @@
 import re
+from dataclasses import dataclass
 from typing import ClassVar
 
 from antlr4.error.ErrorListener import ErrorListener
 
 
 class SwagError:
-    kind: str
-    filename: str
-    line: int
-    column: int
-    message: str
+
+    def __init__(self, kind: str, filename: str, line: int, column: int, message: str):
+        self.kind = kind
+        self.filename = filename
+        self.line = line
+        self.column = column
+        self.message = message
 
     def __str__(self) -> str:
         return self.message
@@ -43,6 +46,8 @@ class SwagErrorListener(ErrorListener):
         "BREAK": "'break'",
         "DEFER": "'defer'",
         "NULL": "'null'",
+        "EOF": "end of file",
+        "NEWLINE": "newline",
         # symbols
         "SEMI": "';'",
         "COLON": "':'",
@@ -64,9 +69,6 @@ class SwagErrorListener(ErrorListener):
         "INC": "'++'",
         "DEC": "'--'",
         "QUESTION": "'?'",
-        # other
-        "EOF": "end of file",
-        "NEWLINE": "newline",
     }
 
     _STMT_STARTERS: ClassVar[frozenset[str]] = frozenset({
@@ -84,6 +86,10 @@ class SwagErrorListener(ErrorListener):
         self._token_names: dict[str, str] = {**self.TOKEN_NAMES, **(extra_token_names or {})}
         self.errors: list[SwagError] = []
 
+    @property
+    def has_errors(self) -> bool:
+        return bool(self.errors)
+
     def syntaxError(self, recognizer, baddieSymbol, line: int, column: int, msg: str, e) -> None:
         """
         recognizer: parser
@@ -94,13 +100,7 @@ class SwagErrorListener(ErrorListener):
         """
 
         kind, text = self._classify(msg, recognizer)
-        error = SwagError(
-            kind=kind,
-            filename=self.filename,
-            line=line,
-            column=column,
-            message=f"[{kind}] {self.filename}:{line}:{column} - {text}",
-        )
+        error = SwagError(kind, self.filename, line, column, f"[{kind}] {self.filename}:{line}:{column} - {text}")
         self.errors.append(error)
         print(error)
 
