@@ -103,3 +103,38 @@ class SwagErrorListener(ErrorListener):
         )
         self.errors.append(error)
         print(error)
+
+    def _classify(self, msg: str, recognizer) -> tuple[str, str]:
+
+        m = _PAT_MISMATCHED.match(msg)
+        if m:
+            off, expect_raw = m.group(1), m.group(2)
+            expected = self._humanize_expectation(expect_raw, recognizer)
+            return "SyntaxError", f"unexpected '{off}, expected {expected}"
+
+        m = _PAT_EXTRANEOUS.match(msg)
+        if m:
+            off, expect_raw = m.group(1), m.group(2)
+            expected = self._humanize_expectation(expect_raw, recognizer)
+            return "SyntaxError", f"extraneous '{off}', expected {expected}"
+
+        m = _PAT_MISSING.match(msg)
+        if m:
+            what, where = m.group(1), m.group(2)
+            expected = self._humanize_expectation(what, recognizer)
+            return "SyntaxError", f"missing {expected} before '{where}'"
+
+        m = _PAT_NO_VIABLE.match(msg)
+        if m:
+            return "SyntaxError", f"unexpected '{m.group(1)}'"
+
+        m = _PAT_LEX_ERROR.match(msg)
+        if m:
+            return "LexError", f"invalid token '{m.group(1)}'"
+
+        return "SyntaxError", msg
+
+    def _humanize_expectation(self, expected_raw: str, recognizer) -> str:
+        """
+        Convert bad looking ANTLR expectation into a readable cool one.
+        """
