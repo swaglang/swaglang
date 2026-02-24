@@ -25,6 +25,47 @@ _PAT_LEX_ERROR = re.compile(r"token recognition error at: '(.+)'", re.IGNORECASE
 _PAT_MISSING = re.compile(r"missing (.+) at '(.+)'")
 
 
+def _split_expectation(raw: str) -> list[str]:
+    s = raw.strip()
+    if s.startswith("{") and s.endswith("}"):
+        s = s[1:-1].strip()
+
+    parts: list[str] = []
+    buf: list[str] = []
+    in_quote = False
+
+    for char in s:
+        if char == "'" and not in_quote:
+            in_quote = True
+            buf.append(char)
+        elif char == "'" and in_quote:
+            in_quote = False
+            buf.append(char)
+        elif char == "," and not in_quote:
+            token = "".join(buf).strip()
+            if token:
+                parts.append(token)
+            buf = []
+        else:
+            buf.append(char)
+
+    if buf:
+        token = "".join(buf).strip()
+        if token:
+            parts.append(token)
+
+    result: list[str] = []
+    for p in parts:
+        if p.startswith("'") and p.endswith("'") and len(p) > 2:
+            result.append(p[1:-1])
+        elif p.startswith('"') and p.endswith('"') and len(p) > 2:
+            result.append(p[1:-1])
+        else:
+            result.append(p)
+
+    return [r for r in result if r]
+
+
 class SwagErrorListener(ErrorListener):
     TOKEN_NAMES: ClassVar[dict[str, str]] = {
         # main
@@ -124,7 +165,7 @@ class SwagErrorListener(ErrorListener):
         if m:
             off, expect_raw = m.group(1), m.group(2)
             expected = self._humanize_expectation(expect_raw, recognizer)
-            return "SyntaxError", f"unexpected '{off}, expected {expected}"
+            return "SyntaxError", f"unexpected '{off}', expected {expected}"
 
         m = _PAT_EXTRANEOUS.match(msg)
         if m:
@@ -149,15 +190,11 @@ class SwagErrorListener(ErrorListener):
         return "SyntaxError", msg
 
     def _humanize_expectation(self, expect_raw: str, recognizer) -> str:
-        """
-        Convert bad looking ANTLR expectation into a readable cool one.
-        """
-
-        tokens = self._split_expectation(expect_raw)
+        tokens = _split_expectation(expect_raw)
         if not tokens:
             return "something else ¯\_(ツ)_/¯ idk"
 
-        upper = {t.upper for t in tokens}
+        upper = {t.upper() for t in tokens}
 
         if upper & self._STMT_STARTERS:
             return "a statement ඞ"
@@ -174,4 +211,3 @@ class SwagErrorListener(ErrorListener):
                 break
 
         return "one of: " + ", ".join(seen)
-

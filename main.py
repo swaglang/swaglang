@@ -24,7 +24,7 @@ def parse(source: str):
 
     tree = parser.prog()
 
-    if error_listener.collected:
+    if error_listener.errors:
         return None
 
     return tree
