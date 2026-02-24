@@ -71,6 +71,21 @@ class SwagErrorListener(ErrorListener):
         "QUESTION": "'?'",
     }
 
+    def _token_to_human(self, token: str, recognizer) -> str:
+        if token in self._token_names:
+            return self._token_names[token]
+
+        if len(token) == 1 and not token.isalnum() and token != "_":
+            return f"'{token}'"
+
+        if token.isdigit():
+            try:
+                return recognizer.getVocabulary().getDisplayName(int(token))
+            except Exception:
+                pass
+
+        return token.lower()
+
     _STMT_STARTERS: ClassVar[frozenset[str]] = frozenset({
         "IDENT", "LET", "CONST", "ACCESS_MOD",
         "IF", "WHILE", "DO", "FOR",
@@ -105,7 +120,6 @@ class SwagErrorListener(ErrorListener):
         print(error)
 
     def _classify(self, msg: str, recognizer) -> tuple[str, str]:
-
         m = _PAT_MISMATCHED.match(msg)
         if m:
             off, expect_raw = m.group(1), m.group(2)
@@ -134,7 +148,30 @@ class SwagErrorListener(ErrorListener):
 
         return "SyntaxError", msg
 
-    def _humanize_expectation(self, expected_raw: str, recognizer) -> str:
+    def _humanize_expectation(self, expect_raw: str, recognizer) -> str:
         """
         Convert bad looking ANTLR expectation into a readable cool one.
         """
+
+        tokens = self._split_expectation(expect_raw)
+        if not tokens:
+            return "something else ¯\_(ツ)_/¯ idk"
+
+        upper = {t.upper for t in tokens}
+
+        if upper & self._STMT_STARTERS:
+            return "a statement ඞ"
+
+        if len(tokens) == 1:
+            return self._token_to_human(tokens[0], recognizer)
+
+        seen: list[str] = []
+        for tiktok in tokens:
+            human = self._token_to_human(tiktok, recognizer)
+            if human not in seen:
+                seen.append(human)
+            if len(seen) >= self._MAX_ALTERNATIVES:
+                break
+
+        return "one of: " + ", ".join(seen)
+
