@@ -141,6 +141,7 @@ class SwagErrorListener(ErrorListener):
         self.filename = filename
         self._token_names: dict[str, str] = {**self.TOKEN_NAMES, **(extra_token_names or {})}
         self.errors: list[SwagError] = []
+        self._reported_positions: set[tuple[int, int]] = set()
 
     @property
     def has_errors(self) -> bool:
@@ -154,16 +155,30 @@ class SwagErrorListener(ErrorListener):
         msg: raw ANTLR string
         e: RecognitionException or None
         """
+        if (line, column) in self._reported_positions:
+            return
 
-        kind, text = self._classify(msg, recognizer)
-        error = SwagError(kind, self.filename, line, column, f"[{kind}] {self.filename}:{line}:{column} - {text}")
+        if baddieSymbol and baddieSymbol.type == recognizer.EOF:
+            return
+
+        self._reported_positions.add((line, column))
+
+        kind, text = self._classify(msg, recognizer, baddieSymbol)
+        error = SwagError(
+            kind,
+            self.filename,
+            line,
+            column,
+            f"[{kind}] {self.filename}:{line}:{column} - {text}")
+
         self.errors.append(error)
         print(error)
 
-    def _classify(self, msg: str, recognizer) -> tuple[str, str]:
+    def _classify(self, msg: str, recognizer, baddieSymbol=None) -> tuple[str, str]:
         m = _PAT_MISMATCHED.match(msg)
         if m:
-            off, expect_raw = m.group(1), m.group(2)
+            off = baddieSymbol.text if baddieSymbol else m.group(1)
+            expect_raw = m.group(2)
             expected = self._humanize_expectation(expect_raw, recognizer)
             return "SyntaxError", f"unexpected '{off}', expected {expected}"
 
@@ -196,7 +211,7 @@ class SwagErrorListener(ErrorListener):
 
         upper = {t.upper() for t in tokens}
 
-        if upper & self._STMT_STARTERS:
+        if len(tokens) > 3 and upper & self._STMT_STARTERS:
             return "a statement ඞ"
 
         if len(tokens) == 1:
