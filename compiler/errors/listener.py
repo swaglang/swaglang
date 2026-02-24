@@ -15,7 +15,11 @@ class SwagError:
         self.message = message
 
     def __str__(self) -> str:
-        return self.message
+        return self.message.replace(
+            f"[{self.kind}]",
+            f"\033[1;31m[{self.kind}]\033[0m",
+            1,
+        )
 
 
 _PAT_MISMATCHED = re.compile(r"mismatched input '(.+)' expecting (.+)")
