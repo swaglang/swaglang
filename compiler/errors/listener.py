@@ -1,5 +1,4 @@
 import re
-from dataclasses import dataclass
 from typing import ClassVar
 
 from antlr4.error.ErrorListener import ErrorListener
@@ -126,7 +125,7 @@ class SwagErrorListener(ErrorListener):
         if token.isdigit():
             try:
                 return recognizer.getVocabulary().getDisplayName(int(token))
-            except Exception:
+            except (ValueError, AttributeError, IndexError):
                 pass
 
         return token.lower()
@@ -151,10 +150,10 @@ class SwagErrorListener(ErrorListener):
     def has_errors(self) -> bool:
         return bool(self.errors)
 
-    def syntaxError(self, recognizer, baddieSymbol, line: int, column: int, msg: str, e) -> None:
+    def syntaxError(self, recognizer, baddie_symbol, line: int, column: int, msg: str, e) -> None:
         """
         recognizer: parser
-        baddieSymbol: Token (maybe None or a token object)
+        baddie_symbol: Token
         line, column: int
         msg: raw ANTLR string
         e: RecognitionException or None
@@ -162,12 +161,12 @@ class SwagErrorListener(ErrorListener):
         if (line, column) in self._reported_positions:
             return
 
-        if baddieSymbol and baddieSymbol.type == recognizer.EOF:
+        if baddie_symbol and baddie_symbol.type == recognizer.EOF:
             return
 
         self._reported_positions.add((line, column))
 
-        kind, text = self._classify(msg, recognizer, baddieSymbol)
+        kind, text = self._classify(msg, recognizer, baddie_symbol)
         error = SwagError(
             kind,
             self.filename,
@@ -178,10 +177,10 @@ class SwagErrorListener(ErrorListener):
         self.errors.append(error)
         print(error)
 
-    def _classify(self, msg: str, recognizer, baddieSymbol=None) -> tuple[str, str]:
+    def _classify(self, msg: str, recognizer, baddie_symbol=None) -> tuple[str, str]:
         m = _PAT_MISMATCHED.match(msg)
         if m:
-            off = baddieSymbol.text if baddieSymbol else m.group(1)
+            off = baddie_symbol.text if baddie_symbol else m.group(1)
             expect_raw = m.group(2)
             expected = self._humanize_expectation(expect_raw, recognizer)
             return "SyntaxError", f"unexpected '{off}', expected {expected}"
@@ -211,7 +210,7 @@ class SwagErrorListener(ErrorListener):
     def _humanize_expectation(self, expect_raw: str, recognizer) -> str:
         tokens = _split_expectation(expect_raw)
         if not tokens:
-            return "something else ¯\_(ツ)_/¯ idk"
+            return r"something else ‾\_(ツ)_/‾ idk"
 
         upper = {t.upper() for t in tokens}
 
