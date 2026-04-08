@@ -20,22 +20,17 @@ class BaseType(Enum):
     BOOL = "bool"
     """boolean type"""
 
-# TODO: arrays are bad, separate array declaration from types
-class ArrayType(Enum):
-    INT_ARRAY = "int[]"
-    """array of integers"""
-    FLOAT_ARRAY = "float[]"
-    """array of floating point numbers"""
-    STRING_ARRAY = "string[]"
-    """array of strings"""
-    BOOL_ARRAY = "bool[]"
-    """array of booleans"""
+@dataclass(frozen=True)
+class UserType:
+    """reference to a named user-defined type (interface, future struct, etc.)"""
+    name: str
 
-class VoidType(Enum):
-    VOID = "void"
-    """no return fom function"""
+@dataclass(frozen=True)
+class ArrayType:
+    """array of `element`. nest for multi-dim: ArrayType(ArrayType(BaseType.INT)) == int[][]"""
+    element: "Type"
 
-Type = BaseType | ArrayType
+Type = BaseType | UserType | ArrayType
 
 class ASTNode:
     """base class for all AST nodes"""
@@ -95,6 +90,20 @@ class ParamDecl(ASTNode):
     """function parameters"""
     name: str
     type_ann: Type
+
+@dataclass
+class InterfaceField(ASTNode):
+    """a field inside an interface body"""
+    name: str
+    type_ann: Type
+    optional: bool
+
+@dataclass
+class InterfaceDecl(PureStmt):
+    """top-level interface declaration"""
+    name: str
+    extends: List[str]
+    fields: List[InterfaceField]
 
 class Data(Expr):
     """data literals"""

@@ -78,6 +78,9 @@ class SwagErrorListener(ErrorListener):
         "STRING": "string literal",
         "BOOL": "boolean",
         "TYPE": "type",
+        "VOID": "'void'",
+        "INTERFACE": "'interface'",
+        "EXTENDS": "'extends'",
         "ACCESS_MOD": "access modifier ('const' or 'let')",
         "IF": "'if'",
         "ELSE": "'else'",
@@ -134,7 +137,7 @@ class SwagErrorListener(ErrorListener):
         "IDENT", "LET", "CONST", "ACCESS_MOD",
         "IF", "WHILE", "DO", "FOR",
         "RETURN", "BREAK", "DEFER",
-        "TYPE",
+        "TYPE", "VOID", "INTERFACE",
     })
 
     _MAX_ALTERNATIVES: ClassVar[int] = 4

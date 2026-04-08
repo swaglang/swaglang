@@ -4,10 +4,11 @@ from compiler.ast.nodes import (
     AccessMod, ArrayType, AssignOp, BaseType, BinaryExpr, BinaryOp, BoolLiteral,
     Break, CodeBlock, Data, Defer, DictLiteral, DoWhileLoop, ElifClause, Expr,
     FieldAccessor, FloatLiteral, ForInLoop, ForLoop, FuncCall, FuncDecl, IfElse,
-    IndexAccessor, IntLiteral, ListLiteral, MultiReturnType, MultiVarAssign,
-    MultiVarDecl, NoAcsModeVarDecl, ParamDecl, PostfixExpr, PostfixOp, Prog,
-    Return, ReturnType, SingleReturnType, StringLiteral, TernaryExpr, Type,
-    UnaryExpr, UnaryOp, VarAssign, VarDecl, VarRef, VoidReturnType, WhileLoop
+    IndexAccessor, InterfaceDecl, InterfaceField, IntLiteral, ListLiteral,
+    MultiReturnType, MultiVarAssign, MultiVarDecl, NoAcsModeVarDecl, ParamDecl,
+    PostfixExpr, PostfixOp, Prog, Return, ReturnType, SingleReturnType,
+    StringLiteral, TernaryExpr, Type, UnaryExpr, UnaryOp, UserType, VarAssign,
+    VarDecl, VarRef, VoidReturnType, WhileLoop
 )
 
 class ASTBuilder(SwagLangParserVisitor):
@@ -46,21 +47,45 @@ class ASTBuilder(SwagLangParserVisitor):
         )
 
     def visitReturn_type(self, ctx) -> ReturnType:
+        if ctx.VOID():
+            return VoidReturnType()
         if ctx.L_PAREN():
             return MultiReturnType(
                 err=ctx.IDENT().getText(),
-                value_type=self._parse_type(ctx.TYPE().getText())
+                value_type=self.visit(ctx.type_ann())
             )
-        raw = ctx.TYPE().getText()
-        if raw == "void":
-            return VoidReturnType()
-        return SingleReturnType(type_ann=self._parse_type(raw))
+        return SingleReturnType(type_ann=self.visit(ctx.type_ann()))
 
+    def visitType_ann(self, ctx) -> Type:
+        if ctx.TYPE():
+            base: Type = BaseType(ctx.TYPE().getText())
+        else:
+            base = UserType(name=ctx.IDENT().getText())
+        depth = len(ctx.L_BRACKET())
+        for _ in range(depth):
+            base = ArrayType(element=base)
+        return base
+
+    def visitInterface_decl(self, ctx) -> InterfaceDecl:
+        idents = ctx.IDENT()
+        name = idents[0].getText()
+        parents: list[str] = []
+        if ctx.EXTENDS():
+            parents = [i.getText() for i in idents[1:]]
+        fields = [self.visit(f) for f in ctx.interface_field()]
+        return InterfaceDecl(name=name, extends=parents, fields=fields)
+
+    def visitInterface_field(self, ctx) -> InterfaceField:
+        return InterfaceField(
+            name=ctx.IDENT().getText(),
+            type_ann=self.visit(ctx.type_ann()),
+            optional=ctx.QUESTION() is not None,
+        )
 
     def visitParam_decl(self, ctx) -> ParamDecl:
         return ParamDecl(
             name=ctx.IDENT().getText(),
-            type_ann=self._parse_type(ctx.TYPE().getText())
+            type_ann=self.visit(ctx.type_ann())
         )
 
     def visitVar_decl(self, ctx) -> VarDecl | MultiVarDecl:
@@ -76,14 +101,14 @@ class ASTBuilder(SwagLangParserVisitor):
         return VarDecl(
             access_mod=mod,
             name=idents[0].getText(),
-            type_ann=self._parse_type(ctx.TYPE().getText()) if ctx.TYPE() else None,
+            type_ann=self.visit(ctx.type_ann()) if ctx.type_ann() else None,
             val=self.visit(ctx.expr())
         )
 
     def visitNo_acs_mode_var_decl(self, ctx) -> NoAcsModeVarDecl:
         return NoAcsModeVarDecl(
             name=ctx.IDENT().getText(),
-            type_ann=self._parse_type(ctx.TYPE().getText()) if ctx.TYPE() else None,
+            type_ann=self.visit(ctx.type_ann()) if ctx.type_ann() else None,
             val=self.visit(ctx.expr())
         )
 
@@ -271,12 +296,6 @@ class ASTBuilder(SwagLangParserVisitor):
 
     def visitDefer(self, ctx) -> Defer:
         return Defer(expr=self.visit(ctx.expr()))
-
-    def _parse_type(self, text: str) -> Type:
-        try:
-            return ArrayType(text)
-        except ValueError:
-            return BaseType(text)
 
     def _parse_scalar_literal(self, text: str) -> IntLiteral | StringLiteral:
         if text.startswith('"'):

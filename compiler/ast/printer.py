@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from compiler.ast.nodes import (
     ASTNode, Prog, CodeBlock, FuncDecl,
     SingleReturnType, MultiReturnType, VoidReturnType, ParamDecl,
+    ArrayType, BaseType, UserType,
+    InterfaceDecl, InterfaceField,
     IntLiteral, FloatLiteral, StringLiteral, BoolLiteral,
     ListLiteral, DictLiteral, NoAcsModeVarDecl,
     IndexAccessor, FieldAccessor, VarRef,
@@ -27,6 +29,17 @@ def _print(node: ASTNode, prefix: str, is_last: bool) -> None:
     for i, child in enumerate(children):
         _print(child, new_prefix, i == len(children) - 1)
 
+def _format_type(t) -> str:
+    match t:
+        case BaseType():
+            return t.value
+        case UserType(name=name):
+            return name
+        case ArrayType(element=element):
+            return f"{_format_type(element)}[]"
+        case _:
+            return "?"
+
 def _label(node: ASTNode) -> str:
     match node:
         case Prog():
@@ -38,19 +51,25 @@ def _label(node: ASTNode) -> str:
                 case VoidReturnType():
                     rt_str = "void"
                 case SingleReturnType(type_ann=t):
-                    rt_str = t.value if t else "void"
+                    rt_str = _format_type(t) if t else "void"
                 case MultiReturnType(err=e, value_type=t):
-                    rt_str = f"({e}, {t.value})"
+                    rt_str = f"({e}, {_format_type(t)})"
             return f"FuncDecl: {name} -> {rt_str}"
         case ParamDecl(name=name, type_ann=t):
-            return f"ParamDecl: {name}: {t.value}"
+            return f"ParamDecl: {name}: {_format_type(t)}"
+        case InterfaceDecl(name=name, extends=extends):
+            ext_str = f" extends {', '.join(extends)}" if extends else ""
+            return f"InterfaceDecl: {name}{ext_str}"
+        case InterfaceField(name=name, type_ann=t, optional=opt):
+            q = "?" if opt else ""
+            return f"InterfaceField: {name}{q}: {_format_type(t)}"
         case VarDecl(access_mod=mod, name=name, type_ann=t, val=val):
-            t_str = f"{t.value}" if t else "inferred"
+            t_str = _format_type(t) if t else "inferred"
             return f"VarDecl: {mod.value} {name}: {t_str}"
         case MultiVarDecl(access_mod=mod, names=names, val=val):
             return f"MultiVarDecl: {mod.value} {', '.join(names)}"
         case NoAcsModeVarDecl(name=name, type_ann=t, val=val):
-            t_str = f"{t.value}" if t else "inferred"
+            t_str = _format_type(t) if t else "inferred"
             return f"Field: {name}: {t_str}"
         case VarAssign(op=op):
             return f"VarAssign: {op.value}"
@@ -117,6 +136,10 @@ def _children(node: ASTNode) -> list[ASTNode]:
         case FuncDecl(params=params, body=body):
             return params + [body]
         case ParamDecl():
+            return []
+        case InterfaceDecl(fields=fields):
+            return fields
+        case InterfaceField():
             return []
         case VarDecl(val=val):
             return [val]
