@@ -69,6 +69,21 @@ class SwagLangParserVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SwagLangParser#type_ann.
+    def visitType_ann(self, ctx:SwagLangParser.Type_annContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SwagLangParser#interface_decl.
+    def visitInterface_decl(self, ctx:SwagLangParser.Interface_declContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SwagLangParser#interface_field.
+    def visitInterface_field(self, ctx:SwagLangParser.Interface_fieldContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SwagLangParser#data.
     def visitData(self, ctx:SwagLangParser.DataContext):
         return self.visitChildren(ctx)

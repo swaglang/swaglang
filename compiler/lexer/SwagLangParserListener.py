@@ -116,6 +116,33 @@ class SwagLangParserListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by SwagLangParser#type_ann.
+    def enterType_ann(self, ctx:SwagLangParser.Type_annContext):
+        pass
+
+    # Exit a parse tree produced by SwagLangParser#type_ann.
+    def exitType_ann(self, ctx:SwagLangParser.Type_annContext):
+        pass
+
+
+    # Enter a parse tree produced by SwagLangParser#interface_decl.
+    def enterInterface_decl(self, ctx:SwagLangParser.Interface_declContext):
+        pass
+
+    # Exit a parse tree produced by SwagLangParser#interface_decl.
+    def exitInterface_decl(self, ctx:SwagLangParser.Interface_declContext):
+        pass
+
+
+    # Enter a parse tree produced by SwagLangParser#interface_field.
+    def enterInterface_field(self, ctx:SwagLangParser.Interface_fieldContext):
+        pass
+
+    # Exit a parse tree produced by SwagLangParser#interface_field.
+    def exitInterface_field(self, ctx:SwagLangParser.Interface_fieldContext):
+        pass
+
+
     # Enter a parse tree produced by SwagLangParser#data.
     def enterData(self, ctx:SwagLangParser.DataContext):
         pass

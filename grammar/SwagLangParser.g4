@@ -20,6 +20,7 @@ stmt
 pure_stmt
     : func_decl
     | var_decl
+    | interface_decl
     ;
 
 code_block
@@ -62,8 +63,21 @@ func_decl
     ;
 
 return_type
-    : TYPE
-    | L_PAREN IDENT COMMA TYPE R_PAREN
+    : type_ann
+    | VOID
+    | L_PAREN IDENT COMMA type_ann R_PAREN
+    ;
+
+type_ann
+    : (TYPE | IDENT) (L_BRACKET R_BRACKET)*
+    ;
+
+interface_decl
+    : INTERFACE IDENT (EXTENDS IDENT (COMMA IDENT)*)? L_CURLY NWLN* (interface_field (NWLN+ interface_field)* NWLN*)? R_CURLY
+    ;
+
+interface_field
+    : IDENT QUESTION? COLUMN type_ann
     ;
 
 data
@@ -87,7 +101,7 @@ dict
     ;
 
 no_acs_mode_var_decl
-    : IDENT (COLUMN TYPE)? ASSIGN expr
+    : IDENT (COLUMN type_ann)? ASSIGN expr
     ;
 
 var_ref
@@ -95,7 +109,7 @@ var_ref
     ;
 
 var_decl
-    : ACCESS_MOD IDENT (COLUMN TYPE)? ASSIGN expr
+    : ACCESS_MOD IDENT (COLUMN type_ann)? ASSIGN expr
     | ACCESS_MOD IDENT COMMA IDENT ASSIGN func_call
     ;
 
@@ -163,7 +177,7 @@ func_call
     ;
 
 param_decl
-    : IDENT COLUMN TYPE
+    : IDENT COLUMN type_ann
     ;
 
 params
