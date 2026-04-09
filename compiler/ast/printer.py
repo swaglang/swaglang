@@ -1,16 +1,16 @@
 from dataclasses import dataclass
 from compiler.ast.nodes import (
-    ASTNode, Prog, CodeBlock, FuncDecl,
+    ASTNode, Prog, CodeBlock, FuncDecl, SetLiteral,
     SingleReturnType, MultiReturnType, VoidReturnType, ParamDecl,
     ArrayType, BaseType, UserType,
     InterfaceDecl, InterfaceField,
     IntLiteral, FloatLiteral, StringLiteral, BoolLiteral,
-    ListLiteral, DictLiteral, NoAcsModeVarDecl,
+    ArrayLiteral, MapField, MapLiteral, StructLiteral, NoAcsModeVarDecl, StructField,
     IndexAccessor, FieldAccessor, VarRef,
     VarDecl, MultiVarDecl, VarAssign, MultiVarAssign,
     FuncCall, BinaryExpr, UnaryExpr, PostfixExpr, TernaryExpr,
     WhileLoop, DoWhileLoop, ForLoop, ForInLoop,
-    IfElse, Break, Return, Defer,
+    IfElse, Break, Return, Defer, MapType, SetType,
 )
 
 @dataclass
@@ -37,6 +37,11 @@ def _format_type(t) -> str:
             return name
         case ArrayType(element=element):
             return f"{_format_type(element)}[]"
+        case MapType(key=k, value=v):
+            return f"map<{_format_type(k)}, {_format_type(v)}>"
+        case SetType(element=e):
+            return f"set<{_format_type(e)}>"
+
         case _:
             return "?"
 
@@ -71,6 +76,8 @@ def _label(node: ASTNode) -> str:
         case NoAcsModeVarDecl(name=name, type_ann=t, val=val):
             t_str = _format_type(t) if t else "inferred"
             return f"Field: {name}: {t_str}"
+        case StructField(name=name):
+            return f"Field: {name}"
         case VarAssign(op=op):
             return f"VarAssign: {op.value}"
         case MultiVarAssign():
@@ -106,14 +113,28 @@ def _label(node: ASTNode) -> str:
             for a in accessors:
                 match a:
                     case IndexAccessor(index=i):
-                        acc_str += f"[{i.val if i else ''}]"
+                        match i:
+                            case IntLiteral(val=v):
+                                acc_str += f"[{v}]"
+                            case StringLiteral(val=v):
+                                acc_str += f'["{v}"]'
+                            case None:
+                                acc_str += "[]"
+                            case _:
+                                acc_str += "[...]"
                     case FieldAccessor(field=f):
                         acc_str += f".{f.name}"
             return f"VarRef: {name}{acc_str}"
-        case ListLiteral():
-            return "ListLiteral"
-        case DictLiteral():
-            return "DictLiteral"
+        case ArrayLiteral():
+            return "ArrayLiteral"
+        case MapLiteral():
+            return "MapLiteral"
+        case MapField():
+            return "MapField"
+        case SetLiteral():
+            return "SetLiteral"
+        case StructLiteral():
+            return "StructLiteral"
         case IntLiteral(val=val):
             return f"IntLiteral: {val}"
         case FloatLiteral(val=val):
@@ -146,6 +167,8 @@ def _children(node: ASTNode) -> list[ASTNode]:
         case MultiVarDecl(val=val):
             return [val]
         case NoAcsModeVarDecl(val=val):
+            return [val]
+        case StructField(val=val):
             return [val]
         case VarAssign(var=var, val=val):
             return [var, val]
@@ -202,9 +225,15 @@ def _children(node: ASTNode) -> list[ASTNode]:
             return args
         case VarRef():
             return []
-        case ListLiteral(elements=elements):
+        case ArrayLiteral(elements=elements):
             return elements
-        case DictLiteral(fields=fields):
+        case MapLiteral(fields=fields):
+            return fields
+        case MapField(key=key, val=val):
+            return [_Label("Key", key), _Label("Val", val)]
+        case SetLiteral(elements=elements):
+            return elements
+        case StructLiteral(fields=fields):
             return fields
         case IntLiteral():
             return []

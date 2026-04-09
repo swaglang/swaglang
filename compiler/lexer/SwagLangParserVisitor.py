@@ -69,6 +69,16 @@ class SwagLangParserVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SwagLangParser#map_type.
+    def visitMap_type(self, ctx:SwagLangParser.Map_typeContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SwagLangParser#set_type.
+    def visitSet_type(self, ctx:SwagLangParser.Set_typeContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SwagLangParser#type_ann.
     def visitType_ann(self, ctx:SwagLangParser.Type_annContext):
         return self.visitChildren(ctx)
@@ -89,13 +99,33 @@ class SwagLangParserVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by SwagLangParser#list.
-    def visitList(self, ctx:SwagLangParser.ListContext):
+    # Visit a parse tree produced by SwagLangParser#array.
+    def visitArray(self, ctx:SwagLangParser.ArrayContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by SwagLangParser#dict.
-    def visitDict(self, ctx:SwagLangParser.DictContext):
+    # Visit a parse tree produced by SwagLangParser#map.
+    def visitMap(self, ctx:SwagLangParser.MapContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SwagLangParser#map_field.
+    def visitMap_field(self, ctx:SwagLangParser.Map_fieldContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SwagLangParser#set.
+    def visitSet(self, ctx:SwagLangParser.SetContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SwagLangParser#struct.
+    def visitStruct(self, ctx:SwagLangParser.StructContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SwagLangParser#struct_field.
+    def visitStruct_field(self, ctx:SwagLangParser.Struct_fieldContext):
         return self.visitChildren(ctx)
 
 

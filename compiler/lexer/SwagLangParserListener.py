@@ -116,6 +116,24 @@ class SwagLangParserListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by SwagLangParser#map_type.
+    def enterMap_type(self, ctx:SwagLangParser.Map_typeContext):
+        pass
+
+    # Exit a parse tree produced by SwagLangParser#map_type.
+    def exitMap_type(self, ctx:SwagLangParser.Map_typeContext):
+        pass
+
+
+    # Enter a parse tree produced by SwagLangParser#set_type.
+    def enterSet_type(self, ctx:SwagLangParser.Set_typeContext):
+        pass
+
+    # Exit a parse tree produced by SwagLangParser#set_type.
+    def exitSet_type(self, ctx:SwagLangParser.Set_typeContext):
+        pass
+
+
     # Enter a parse tree produced by SwagLangParser#type_ann.
     def enterType_ann(self, ctx:SwagLangParser.Type_annContext):
         pass
@@ -152,21 +170,57 @@ class SwagLangParserListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by SwagLangParser#list.
-    def enterList(self, ctx:SwagLangParser.ListContext):
+    # Enter a parse tree produced by SwagLangParser#array.
+    def enterArray(self, ctx:SwagLangParser.ArrayContext):
         pass
 
-    # Exit a parse tree produced by SwagLangParser#list.
-    def exitList(self, ctx:SwagLangParser.ListContext):
+    # Exit a parse tree produced by SwagLangParser#array.
+    def exitArray(self, ctx:SwagLangParser.ArrayContext):
         pass
 
 
-    # Enter a parse tree produced by SwagLangParser#dict.
-    def enterDict(self, ctx:SwagLangParser.DictContext):
+    # Enter a parse tree produced by SwagLangParser#map.
+    def enterMap(self, ctx:SwagLangParser.MapContext):
         pass
 
-    # Exit a parse tree produced by SwagLangParser#dict.
-    def exitDict(self, ctx:SwagLangParser.DictContext):
+    # Exit a parse tree produced by SwagLangParser#map.
+    def exitMap(self, ctx:SwagLangParser.MapContext):
+        pass
+
+
+    # Enter a parse tree produced by SwagLangParser#map_field.
+    def enterMap_field(self, ctx:SwagLangParser.Map_fieldContext):
+        pass
+
+    # Exit a parse tree produced by SwagLangParser#map_field.
+    def exitMap_field(self, ctx:SwagLangParser.Map_fieldContext):
+        pass
+
+
+    # Enter a parse tree produced by SwagLangParser#set.
+    def enterSet(self, ctx:SwagLangParser.SetContext):
+        pass
+
+    # Exit a parse tree produced by SwagLangParser#set.
+    def exitSet(self, ctx:SwagLangParser.SetContext):
+        pass
+
+
+    # Enter a parse tree produced by SwagLangParser#struct.
+    def enterStruct(self, ctx:SwagLangParser.StructContext):
+        pass
+
+    # Exit a parse tree produced by SwagLangParser#struct.
+    def exitStruct(self, ctx:SwagLangParser.StructContext):
+        pass
+
+
+    # Enter a parse tree produced by SwagLangParser#struct_field.
+    def enterStruct_field(self, ctx:SwagLangParser.Struct_fieldContext):
+        pass
+
+    # Exit a parse tree produced by SwagLangParser#struct_field.
+    def exitStruct_field(self, ctx:SwagLangParser.Struct_fieldContext):
         pass
 
 

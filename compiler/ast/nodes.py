@@ -32,7 +32,18 @@ class ArrayType:
     """array of `element`. nest for multi-dim: ArrayType(ArrayType(BaseType.INT)) == int[][]"""
     element: "Type"
 
-Type = BaseType | UserType | ArrayType
+@dataclass(frozen=True)
+class MapType:
+    """map type: <key, value>"""
+    key: Type
+    value: Type
+
+@dataclass(frozen=True)
+class SetType:
+    """set type: <element>"""
+    element: Type
+
+Type = BaseType | UserType | ArrayType | MapType | SetType
 
 class ASTNode:
     """base class for all AST nodes"""
@@ -130,18 +141,40 @@ class BoolLiteral(Data):
     val: bool
 
 @dataclass
-class ListLiteral(Data):
-    """list literal"""
-    elements: List[Data]
+class ArrayLiteral(Data):
+    """array literal"""
+    elements: List[Expr]
 
 @dataclass
-class DictLiteral(Data):
-    """dictionary literal"""
-    fields: List[NoAcsModeVarDecl]
+class SetLiteral(Data):
+    """set literal"""
+    elements: List[Expr]
+
+@dataclass
+class MapLiteral(Data):
+    """map literal (key-value pairs)"""
+    fields: List[MapField]
+
+@dataclass
+class MapField(ASTNode):
+    """key-value pair in a map literal"""
+    key: Expr
+    val: Expr
+
+@dataclass
+class StructLiteral(Data):
+    """struct literal with field initializations"""
+    fields: List[StructField]
+
+@dataclass
+class StructField(ASTNode):
+    """field initialization in a struct literal: name: expr"""
+    name: str
+    val: Expr
 
 @dataclass
 class NoAcsModeVarDecl(ASTNode):
-    """variable declaration without access modifier, used in dict literals"""
+    """variable declaration without access modifier, used in for-loop init"""
     name: str
     type_ann: Optional[Type]
     val: Expr
