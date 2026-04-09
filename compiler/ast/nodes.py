@@ -141,6 +141,10 @@ class BoolLiteral(Data):
     val: bool
 
 @dataclass
+class NullLiteral(Data):
+    """null literal"""
+
+@dataclass
 class ArrayLiteral(Data):
     """array literal"""
     elements: List[Expr]

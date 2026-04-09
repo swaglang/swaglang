@@ -4,7 +4,7 @@ from compiler.ast.nodes import (
     SingleReturnType, MultiReturnType, VoidReturnType, ParamDecl,
     ArrayType, BaseType, UserType,
     InterfaceDecl, InterfaceField,
-    IntLiteral, FloatLiteral, StringLiteral, BoolLiteral,
+    IntLiteral, FloatLiteral, StringLiteral, BoolLiteral, NullLiteral,
     ArrayLiteral, MapField, MapLiteral, StructLiteral, NoAcsModeVarDecl, StructField,
     IndexAccessor, FieldAccessor, VarRef,
     VarDecl, MultiVarDecl, VarAssign, MultiVarAssign,
@@ -143,6 +143,8 @@ def _label(node: ASTNode) -> str:
             return f"StringLiteral: {val}"
         case BoolLiteral(val=val):
             return f"BoolLiteral: {'true' if val else 'false'}"
+        case NullLiteral():
+            return "NullLiteral"
         case _Label(label=label):
             return label
         case _:
@@ -242,6 +244,8 @@ def _children(node: ASTNode) -> list[ASTNode]:
         case StringLiteral():
             return []
         case BoolLiteral():
+            return []
+        case NullLiteral():
             return []
         case _Label(child=child):
             return [child]
