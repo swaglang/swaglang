@@ -354,6 +354,8 @@ class UnaryOp(Enum):
     """unary operators"""
     NOT = "!"
     """logical not"""
+    NEG = "-"
+    """arithmetic negation"""
 
 class PostfixOp(Enum):
     """postfix operators"""

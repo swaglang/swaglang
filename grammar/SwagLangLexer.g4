@@ -65,8 +65,8 @@ MINUS      : '-';
 
 // Literals
 STRING : '"' ( ~["\\\r\n] | '\\' . )* '"';
-INT    : '-'?[0-9]+;
-FLOAT  : '-'?[0-9]* '.' [0-9]+;
+INT    : [0-9]+;
+FLOAT  : [0-9]* '.' [0-9]+;
 
 // Hidden tokens
 NWLN           : '\r'? '\n';
