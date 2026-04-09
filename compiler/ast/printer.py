@@ -52,8 +52,8 @@ def _label(node: ASTNode) -> str:
                     rt_str = "void"
                 case SingleReturnType(type_ann=t):
                     rt_str = _format_type(t) if t else "void"
-                case MultiReturnType(err=e, value_type=t):
-                    rt_str = f"({e}, {_format_type(t)})"
+                case MultiReturnType(types=ts):
+                    rt_str = f"({', '.join(_format_type(t) for t in ts)})"
             return f"FuncDecl: {name} -> {rt_str}"
         case ParamDecl(name=name, type_ann=t):
             return f"ParamDecl: {name}: {_format_type(t)}"
@@ -182,13 +182,8 @@ def _children(node: ASTNode) -> list[ASTNode]:
             return [iterable, body]
         case Break():
             return []
-        case Return(error=e, val=v):
-            children = []
-            if e:
-                children.append(_Label("Error", e))
-            if v:
-                children.append(_Label("Value", v))
-            return children
+        case Return(vals=vs):
+            return [_Label(f"Value {i}", v) for i, v in enumerate(vs)]
         case Defer(expr=e):
             return [e]
         case BinaryExpr(left=l, right=r):

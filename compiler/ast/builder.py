@@ -51,10 +51,9 @@ class ASTBuilder(SwagLangParserVisitor):
             return VoidReturnType()
         if ctx.L_PAREN():
             return MultiReturnType(
-                err=ctx.IDENT().getText(),
-                value_type=self.visit(ctx.type_ann())
+                types=[self.visit(t) for t in ctx.type_ann()]
             )
-        return SingleReturnType(type_ann=self.visit(ctx.type_ann()))
+        return SingleReturnType(type_ann=self.visit(ctx.type_ann(0)))
 
     def visitType_ann(self, ctx) -> Type:
         if ctx.TYPE():
@@ -91,10 +90,10 @@ class ASTBuilder(SwagLangParserVisitor):
     def visitVar_decl(self, ctx) -> VarDecl | MultiVarDecl:
         mod = AccessMod(ctx.ACCESS_MOD().getText())
         idents = ctx.IDENT()
-        if len(idents) == 2:
+        if len(idents) >= 2:
             return MultiVarDecl(
                 access_mod=mod,
-                names=[idents[0].getText(), idents[1].getText()],
+                names=[i.getText() for i in idents],
                 val=self.visit(ctx.func_call()),
             )
 
@@ -115,9 +114,9 @@ class ASTBuilder(SwagLangParserVisitor):
     def visitVar_assign(self, ctx) -> VarAssign | MultiVarAssign:
         var_refs = ctx.var_ref()
 
-        if len(var_refs) == 2:
+        if len(var_refs) >= 2:
             return MultiVarAssign(
-                vars=[self.visit(var_refs[0]), self.visit(var_refs[1])],
+                vars=[self.visit(v) for v in var_refs],
                 val=self.visit(ctx.func_call())
             )
 
@@ -284,15 +283,7 @@ class ASTBuilder(SwagLangParserVisitor):
         return Break()
 
     def visitReturn(self, ctx) -> Return:
-        exprs = ctx.expr()
-        if not exprs:
-            return Return()
-        if len(exprs) == 2:
-            return Return(
-                error=self.visit(exprs[0]),
-                val=self.visit(exprs[1])
-            )
-        return Return(val=self.visit(exprs[0]))
+        return Return(vals=[self.visit(e) for e in ctx.expr()])
 
     def visitDefer(self, ctx) -> Defer:
         return Defer(expr=self.visit(ctx.expr()))
