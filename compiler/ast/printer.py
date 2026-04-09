@@ -1,16 +1,14 @@
 from dataclasses import dataclass
 from compiler.ast.nodes import (
-    ASTNode, Prog, CodeBlock, FuncDecl, SetLiteral,
-    SingleReturnType, MultiReturnType, VoidReturnType, ParamDecl,
-    ArrayType, BaseType, UserType,
-    InterfaceDecl, InterfaceField,
-    IntLiteral, FloatLiteral, StringLiteral, BoolLiteral, NullLiteral,
-    ArrayLiteral, MapField, MapLiteral, StructLiteral, NoAcsModeVarDecl, StructField,
-    IndexAccessor, FieldAccessor, VarRef,
-    VarDecl, MultiVarDecl, VarAssign, MultiVarAssign,
-    FuncCall, BinaryExpr, UnaryExpr, PostfixExpr, TernaryExpr,
-    WhileLoop, DoWhileLoop, ForLoop, ForInLoop,
-    IfElse, Break, Return, Defer, MapType, SetType,
+    ASTNode, ArrayLiteral, ArrayType, BaseType, BinaryExpr, BoolLiteral,
+    Break, CodeBlock, Continue, Defer, DoWhileLoop, FieldAccessor, FloatLiteral,
+    ForInLoop, ForLoop, FuncCall, FuncDecl, IfElse, IndexAccessor,
+    IntLiteral, InterfaceDecl, InterfaceField, MapField, MapLiteral,
+    MapType, MultiReturnType, MultiVarAssign, MultiVarDecl,
+    NoAcsModeVarDecl, NullLiteral, ParamDecl, PostfixExpr, Prog,
+    Return, SetLiteral, SetType, SingleReturnType, StringLiteral,
+    StructField, StructLiteral, TernaryExpr, UnaryExpr, UserType,
+    VarAssign, VarDecl, VarRef, VoidReturnType, WhileLoop,
 )
 
 @dataclass
@@ -94,6 +92,8 @@ def _label(node: ASTNode) -> str:
             return f"ForInLoop: {var} in"
         case Break():
             return "Break"
+        case Continue():
+            return "Continue"
         case Return():
             return "Return"
         case Defer():
@@ -206,6 +206,8 @@ def _children(node: ASTNode) -> list[ASTNode]:
         case ForInLoop(iterable=iterable, body=body):
             return [iterable, body]
         case Break():
+            return []
+        case Continue():
             return []
         case Return(vals=vs):
             return [_Label(f"Value {i}", v) for i, v in enumerate(vs)]

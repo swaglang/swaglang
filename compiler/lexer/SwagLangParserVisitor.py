@@ -54,6 +54,11 @@ class SwagLangParserVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SwagLangParser#continue.
+    def visitContinue(self, ctx:SwagLangParser.ContinueContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SwagLangParser#return.
     def visitReturn(self, ctx:SwagLangParser.ReturnContext):
         return self.visitChildren(ctx)

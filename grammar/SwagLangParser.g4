@@ -39,6 +39,7 @@ pure_func_stmt
     | loop
     | conditional
     | break
+    | continue
     | return
     | defer
     | expr
@@ -50,6 +51,10 @@ defer
 
 break
     : BREAK
+    ;
+
+continue
+    : CONTINUE
     ;
 
 return
