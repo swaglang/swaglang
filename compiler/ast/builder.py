@@ -7,7 +7,7 @@ from compiler.ast.nodes import (
     IndexAccessor, InterfaceDecl, InterfaceField, IntLiteral, ArrayLiteral, MapType,
     MultiReturnType, MultiVarAssign, MultiVarDecl, NoAcsModeVarDecl, ParamDecl,
     PostfixExpr, PostfixOp, Prog, Return, ReturnType, SetLiteral, SetType, SingleReturnType,
-    StringLiteral, StructField, TernaryExpr, Type, UnaryExpr, UnaryOp, UserType,
+    StringLiteral, StructField, TernaryExpr, Type, UnaryExpr, UnaryOp, UserType, NullLiteral,
     VarAssign, VarDecl, VarRef, VoidReturnType, WhileLoop, StructLiteral,
 )
 
@@ -181,6 +181,8 @@ class ASTBuilder(SwagLangParserVisitor):
             return FloatLiteral(val=float(ctx.FLOAT().getText()))
         if ctx.BOOL():
             return BoolLiteral(val=ctx.BOOL().getText() == "true")
+        if ctx.NULL():
+            return NullLiteral()
         if ctx.array():
             return self.visit(ctx.array())
         if ctx.map_():

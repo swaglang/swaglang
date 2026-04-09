@@ -91,6 +91,7 @@ data
     | STRING
     | FLOAT
     | BOOL
+    | NULL
     | array
     | map
     | set

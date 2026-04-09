@@ -19,6 +19,7 @@ RETURN     : 'return';
 DEFER      : 'defer';
 ACCESS_MOD : 'const' | 'let';
 BOOL       : 'true' | 'false';
+NULL       : 'null';
 
 IDENT: [a-zA-Z_][a-zA-Z0-9_]*;
 
