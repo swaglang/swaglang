@@ -19,6 +19,8 @@ class BaseType(Enum):
     """string type"""
     BOOL = "bool"
     """boolean type"""
+    ERROR = "error"
+    """error type"""
 
 @dataclass(frozen=True)
 class UserType:
@@ -77,9 +79,8 @@ class SingleReturnType(ReturnType):
 
 @dataclass
 class MultiReturnType(ReturnType):
-    """multiple return types"""
-    err: str
-    value_type: Type
+    """multiple return types (tuple of >= 2)"""
+    types: List[Type]
 
 @dataclass
 class VoidReturnType(ReturnType):
@@ -269,8 +270,8 @@ class Break(PureFuncStmt):
 
 @dataclass
 class Return(PureFuncStmt):
-    val: Optional[Expr] = None
-    error: Optional[Expr] = None
+    """return statement; vals is empty for bare `return`"""
+    vals: List[Expr] = field(default_factory=list)
 
 @dataclass
 class Defer(PureFuncStmt):

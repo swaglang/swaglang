@@ -53,9 +53,7 @@ break
     ;
 
 return
-    : RETURN
-    | RETURN expr
-    | RETURN expr COMMA expr
+    : RETURN (expr (COMMA expr)*)?
     ;
 
 func_decl
@@ -65,7 +63,7 @@ func_decl
 return_type
     : type_ann
     | VOID
-    | L_PAREN IDENT COMMA type_ann R_PAREN
+    | L_PAREN type_ann (COMMA type_ann)+ R_PAREN
     ;
 
 type_ann
@@ -110,12 +108,12 @@ var_ref
 
 var_decl
     : ACCESS_MOD IDENT (COLUMN type_ann)? ASSIGN expr
-    | ACCESS_MOD IDENT COMMA IDENT ASSIGN func_call
+    | ACCESS_MOD IDENT (COMMA IDENT)+ ASSIGN func_call
     ;
 
 var_assign
     : var_ref ( ASSIGN | ADD_ASSIGN | SUB_ASSIGN | MUL_ASSIGN | DIV_ASSIGN | MOD_ASSIGN ) expr
-    |  var_ref COMMA var_ref ASSIGN func_call
+    | var_ref (COMMA var_ref)+ ASSIGN func_call
     ;
 
 conditional_body

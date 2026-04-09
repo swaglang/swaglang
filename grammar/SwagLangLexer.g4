@@ -4,7 +4,7 @@ lexer grammar SwagLangLexer;
 INTERFACE  : 'interface';
 EXTENDS    : 'extends';
 VOID       : 'void';
-TYPE       : 'int' | 'float' | 'string' | 'bool';
+TYPE       : 'int' | 'float' | 'string' | 'bool' | 'error';
 IF         : 'if';
 ELSE_IF    : 'else' SPACE+ 'if';
 ELSE       : 'else';
