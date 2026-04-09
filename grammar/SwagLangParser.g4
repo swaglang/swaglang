@@ -66,8 +66,16 @@ return_type
     | L_PAREN type_ann (COMMA type_ann)+ R_PAREN
     ;
 
+map_type
+    : MAP LT type_ann COMMA type_ann GT
+    ;
+
+set_type
+    : SET LT type_ann GT
+    ;
+
 type_ann
-    : (TYPE | IDENT) (L_BRACKET R_BRACKET)*
+    : (TYPE | map_type | set_type | IDENT) (L_BRACKET R_BRACKET)*
     ;
 
 interface_decl
@@ -83,19 +91,34 @@ data
     | STRING
     | FLOAT
     | BOOL
-    | list
-    | dict
-    // TODO:
-    // | set
+    | array
+    | map
+    | set
+    | struct
     ;
 
-list
-    // TODO: multi-line lists
-    : L_BRACKET (data (COMMA data)* COMMA?)? R_BRACKET
+array
+    : L_BRACKET NWLN* (expr (COMMA NWLN* expr)* COMMA?)? NWLN* R_BRACKET
     ;
 
-dict
-    : L_CURLY NWLN* (no_acs_mode_var_decl (COMMA NWLN* no_acs_mode_var_decl)* COMMA?)? NWLN* R_CURLY
+map
+    : L_CURLY L_CURLY NWLN* (map_field (COMMA NWLN* map_field)* COMMA?)? NWLN* R_CURLY R_CURLY
+    ;
+
+map_field
+    : expr COLUMN expr
+    ;
+
+set
+    : SET_START NWLN* (expr (COMMA NWLN* expr)* COMMA?)? NWLN* R_BRACKET
+    ;
+
+struct
+    : L_CURLY NWLN* (struct_field (COMMA NWLN* struct_field)* COMMA?)? NWLN* R_CURLY
+    ;
+
+struct_field
+    : IDENT COLUMN expr
     ;
 
 no_acs_mode_var_decl
@@ -103,7 +126,7 @@ no_acs_mode_var_decl
     ;
 
 var_ref
-    : IDENT ((L_BRACKET (INT | STRING)? R_BRACKET) | (DOT var_ref))*
+    : IDENT ((L_BRACKET expr R_BRACKET) | (DOT var_ref))*
     ;
 
 var_decl

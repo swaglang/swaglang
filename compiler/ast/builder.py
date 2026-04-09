@@ -2,13 +2,13 @@ from compiler.lexer.SwagLangParser import SwagLangParser
 from compiler.lexer.SwagLangParserVisitor import SwagLangParserVisitor
 from compiler.ast.nodes import (
     AccessMod, ArrayType, AssignOp, BaseType, BinaryExpr, BinaryOp, BoolLiteral,
-    Break, CodeBlock, Data, Defer, DictLiteral, DoWhileLoop, ElifClause, Expr,
+    Break, CodeBlock, Data, Defer, MapField, MapLiteral, DoWhileLoop, ElifClause, Expr,
     FieldAccessor, FloatLiteral, ForInLoop, ForLoop, FuncCall, FuncDecl, IfElse,
-    IndexAccessor, InterfaceDecl, InterfaceField, IntLiteral, ListLiteral,
+    IndexAccessor, InterfaceDecl, InterfaceField, IntLiteral, ArrayLiteral, MapType,
     MultiReturnType, MultiVarAssign, MultiVarDecl, NoAcsModeVarDecl, ParamDecl,
-    PostfixExpr, PostfixOp, Prog, Return, ReturnType, SingleReturnType,
-    StringLiteral, TernaryExpr, Type, UnaryExpr, UnaryOp, UserType, VarAssign,
-    VarDecl, VarRef, VoidReturnType, WhileLoop
+    PostfixExpr, PostfixOp, Prog, Return, ReturnType, SetLiteral, SetType, SingleReturnType,
+    StringLiteral, StructField, TernaryExpr, Type, UnaryExpr, UnaryOp, UserType,
+    VarAssign, VarDecl, VarRef, VoidReturnType, WhileLoop, StructLiteral,
 )
 
 class ASTBuilder(SwagLangParserVisitor):
@@ -58,12 +58,26 @@ class ASTBuilder(SwagLangParserVisitor):
     def visitType_ann(self, ctx) -> Type:
         if ctx.TYPE():
             base: Type = BaseType(ctx.TYPE().getText())
+        elif ctx.map_type():
+            base = self.visit(ctx.map_type())
+        elif ctx.set_type():
+            base = self.visit(ctx.set_type())
         else:
             base = UserType(name=ctx.IDENT().getText())
+
         depth = len(ctx.L_BRACKET())
         for _ in range(depth):
             base = ArrayType(element=base)
         return base
+
+    def visitMap_type(self, ctx) -> MapType:
+        return MapType(
+            key=self.visit(ctx.type_ann(0)),
+            value=self.visit(ctx.type_ann(1))
+        )
+
+    def visitSet_type(self, ctx) -> SetType:
+        return SetType(element=self.visit(ctx.type_ann()))
 
     def visitInterface_decl(self, ctx) -> InterfaceDecl:
         idents = ctx.IDENT()
@@ -135,22 +149,26 @@ class ASTBuilder(SwagLangParserVisitor):
     def visitVar_ref(self, ctx) -> VarRef:
         name = ctx.IDENT().getText()
         accessors = []
-        children = list(ctx.getChildren())
         i = 1
-        while i < len(children):
-            text = children[i].getText()
-            if text == "[":
+        while i < len(ctx.children):
+            child = ctx.children[i]
+            if child.getText() == "[":
+                expr_node = ctx.children[i + 1]
+                accessors.append(IndexAccessor(
+                    var=name,
+                    index=self.visit(expr_node)
+                ))
+                i += 3
+            elif child.getText() == ".":
+                field_node = ctx.children[i + 1]
+                accessors.append(FieldAccessor(
+                    var=name,
+                    field=self.visit(field_node)
+                ))
+                i += 2
+
+            else:
                 i += 1
-                if children[i].getText() == "]":
-                    accessors.append(IndexAccessor(var=name, index = None))
-                else:
-                    index = self._parse_scalar_literal(children[i].getText())
-                    accessors.append(IndexAccessor(var=name, index=index))
-                    i += 1
-            elif text == ".":
-                i += 1
-                accessors.append(FieldAccessor(var=name, field=self.visit(children[i])))
-            i += 1
 
         return VarRef(name=name, accessors=accessors)
 
@@ -163,16 +181,38 @@ class ASTBuilder(SwagLangParserVisitor):
             return FloatLiteral(val=float(ctx.FLOAT().getText()))
         if ctx.BOOL():
             return BoolLiteral(val=ctx.BOOL().getText() == "true")
-        if ctx.list_():
-            return self.visit(ctx.list_())
-        if ctx.dict_():
-            return self.visit(ctx.dict_())
+        if ctx.array():
+            return self.visit(ctx.array())
+        if ctx.map_():
+            return self.visit(ctx.map_())
+        if ctx.set_():
+            return self.visit(ctx.set_())
+        if ctx.struct():
+            return self.visit(ctx.struct())
 
-    def visitList(self, ctx) -> ListLiteral:
-        return ListLiteral(elements = [self.visit(f) for f in ctx.data()])
+    def visitArray(self, ctx) -> ArrayLiteral:
+        return ArrayLiteral(elements=[self.visit(e) for e in ctx.expr()])
 
-    def visitDict(self, ctx) -> DictLiteral:
-        return DictLiteral(fields = [self.visit(f) for f in ctx.no_acs_mode_var_decl()])
+    def visitMap(self, ctx) -> MapLiteral:
+        return MapLiteral(fields=[self.visit(f) for f in ctx.map_field()])
+
+    def visitMap_field(self, ctx) -> MapField:
+        return MapField(
+            key=self.visit(ctx.expr(0)),
+            val=self.visit(ctx.expr(1))
+        )
+
+    def visitSet(self, ctx) -> SetLiteral:
+        return SetLiteral(elements=[self.visit(e) for e in ctx.expr()])
+
+    def visitStruct(self, ctx) -> StructLiteral:
+        return StructLiteral(fields=[self.visit(f) for f in ctx.struct_field()])
+
+    def visitStruct_field(self, ctx) -> StructField:
+        return StructField(
+            name=ctx.IDENT().getText(),
+            val=self.visit(ctx.expr())
+        )
 
     def visitExpr(self, ctx) -> Expr:
         n = ctx.getChildCount()

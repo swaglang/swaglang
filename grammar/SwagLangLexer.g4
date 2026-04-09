@@ -4,6 +4,8 @@ lexer grammar SwagLangLexer;
 INTERFACE  : 'interface';
 EXTENDS    : 'extends';
 VOID       : 'void';
+MAP        : 'map';
+SET        : 'set';
 TYPE       : 'int' | 'float' | 'string' | 'bool' | 'error';
 IF         : 'if';
 ELSE_IF    : 'else' SPACE+ 'if';
@@ -18,7 +20,7 @@ DEFER      : 'defer';
 ACCESS_MOD : 'const' | 'let';
 BOOL       : 'true' | 'false';
 
-IDENT: [a-zA-Z]+;
+IDENT: [a-zA-Z_][a-zA-Z0-9_]*;
 
 // Punctuation
 COLUMN    : ':';
@@ -32,6 +34,7 @@ R_BRACKET : ']';
 QUESTION  : '?';
 COMMA     : ',';
 DOT       : '.';
+SET_START : '#[';
 
 // Operators
 ASSIGN     : '=';
