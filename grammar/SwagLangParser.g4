@@ -190,6 +190,7 @@ expr
     | var_ref
     | var_ref (INC | DEC)
     | NOT expr
+    | MINUS expr
     | <assoc=right> expr EXP expr
     | expr (MUL | DIV | MOD) expr
     | expr (PLUS | MINUS) expr
