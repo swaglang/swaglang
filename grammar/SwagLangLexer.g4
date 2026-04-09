@@ -15,6 +15,7 @@ IN         : 'in';
 WHILE      : 'while';
 DO         : 'do';
 BREAK      : 'break';
+CONTINUE   : 'continue';
 RETURN     : 'return';
 DEFER      : 'defer';
 ACCESS_MOD : 'const' | 'let';

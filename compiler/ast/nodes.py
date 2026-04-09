@@ -306,6 +306,10 @@ class Break(PureFuncStmt):
     """break statement to exit loops"""
 
 @dataclass
+class Continue(PureFuncStmt):
+    """continue statement to skip to the next iteration of loops"""
+
+@dataclass
 class Return(PureFuncStmt):
     """return statement; vals is empty for bare `return`"""
     vals: List[Expr] = field(default_factory=list)

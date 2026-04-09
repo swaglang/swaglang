@@ -1,14 +1,17 @@
 from compiler.lexer.SwagLangParser import SwagLangParser
 from compiler.lexer.SwagLangParserVisitor import SwagLangParserVisitor
 from compiler.ast.nodes import (
-    AccessMod, ArrayType, AssignOp, BaseType, BinaryExpr, BinaryOp, BoolLiteral,
-    Break, CodeBlock, Data, Defer, MapField, MapLiteral, DoWhileLoop, ElifClause, Expr,
-    FieldAccessor, FloatLiteral, ForInLoop, ForLoop, FuncCall, FuncDecl, IfElse,
-    IndexAccessor, InterfaceDecl, InterfaceField, IntLiteral, ArrayLiteral, MapType,
-    MultiReturnType, MultiVarAssign, MultiVarDecl, NoAcsModeVarDecl, ParamDecl,
-    PostfixExpr, PostfixOp, Prog, Return, ReturnType, SetLiteral, SetType, SingleReturnType,
-    StringLiteral, StructField, TernaryExpr, Type, UnaryExpr, UnaryOp, UserType, NullLiteral,
-    VarAssign, VarDecl, VarRef, VoidReturnType, WhileLoop, StructLiteral,
+    AccessMod, ArrayLiteral, ArrayType, AssignOp, BaseType, BinaryExpr,
+    BinaryOp, BoolLiteral, Break, CodeBlock, Continue, Data, Defer,
+    DoWhileLoop, ElifClause, Expr, FieldAccessor, FloatLiteral,
+    ForInLoop, ForLoop, FuncCall, FuncDecl, IfElse, IndexAccessor,
+    IntLiteral, InterfaceDecl, InterfaceField, MapField, MapLiteral,
+    MapType, MultiReturnType, MultiVarAssign, MultiVarDecl,
+    NoAcsModeVarDecl, NullLiteral, ParamDecl, PostfixExpr, PostfixOp,
+    Prog, Return, ReturnType, SetLiteral, SetType, SingleReturnType,
+    StringLiteral, StructField, StructLiteral, TernaryExpr, Type,
+    UnaryExpr, UnaryOp, UserType, VarAssign, VarDecl, VarRef,
+    VoidReturnType, WhileLoop,
 )
 
 class ASTBuilder(SwagLangParserVisitor):
@@ -323,6 +326,9 @@ class ASTBuilder(SwagLangParserVisitor):
 
     def visitBreak(self, _) -> Break:
         return Break()
+
+    def visitContinue(self, _) -> Continue:
+        return Continue()
 
     def visitReturn(self, ctx) -> Return:
         return Return(vals=[self.visit(e) for e in ctx.expr()])

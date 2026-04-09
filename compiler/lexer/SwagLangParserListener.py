@@ -89,6 +89,15 @@ class SwagLangParserListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by SwagLangParser#continue.
+    def enterContinue(self, ctx:SwagLangParser.ContinueContext):
+        pass
+
+    # Exit a parse tree produced by SwagLangParser#continue.
+    def exitContinue(self, ctx:SwagLangParser.ContinueContext):
+        pass
+
+
     # Enter a parse tree produced by SwagLangParser#return.
     def enterReturn(self, ctx:SwagLangParser.ReturnContext):
         pass
