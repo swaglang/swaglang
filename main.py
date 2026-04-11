@@ -5,6 +5,7 @@ from compiler.lexer.SwagLangLexer import SwagLangLexer
 from compiler.lexer.SwagLangParser import SwagLangParser
 from compiler.ast.builder import ASTBuilder
 from compiler.errors.listener import SwagErrorListener
+from compiler.semantic.analyzer import SemanticAnalyzer
 
 
 def parse(source: str):
@@ -38,7 +39,12 @@ def main():
     tree = parse(args.file)
     if tree is None:
         return
+
     ast = ASTBuilder().visit(tree)
+
+    _, _, sem_errors = SemanticAnalyzer(args.file).analyze(ast)
+    for e in sem_errors:
+        print(e)
 
     print_ast(ast)
 
