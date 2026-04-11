@@ -473,10 +473,11 @@ class SemanticAnalyzer:
 
     def _infer_expr(self, node: Expr) -> Type:
         t = self._infer_expr_inner(node)
-        self.types.set(node, t)
-        return t
+        if t is not None:
+            self.types.set(node, t)
+        return t if t is not None else BaseType.ERROR
 
-    def _infer_expr_inner(self, node: Expr) -> Type:
+    def _infer_expr_inner(self, node: Expr) -> Optional[Type]:
         match node:
             case IntLiteral():
                 return BaseType.INT
@@ -656,7 +657,7 @@ class SemanticAnalyzer:
 
         if node.func in _BUILTINS:
             infer_args()
-            return BaseType.ERROR  # void/unknown
+            return None  # void — don't annotate in tree
 
         func_sym = self.symbols.lookup(node.func)
         if func_sym is None:
@@ -696,14 +697,14 @@ class SemanticAnalyzer:
 
         match func_decl.return_type:
             case SingleReturnType(type_ann=t):
-                return t if t is not None else BaseType.ERROR
+                return t if t is not None else None
             case MultiReturnType():
                 # Multi-return used as a single expression — caller must handle
-                return BaseType.ERROR
+                return None
             case VoidReturnType():
-                return BaseType.ERROR
+                return None  # void — don't annotate in tree
             case _:
-                return BaseType.ERROR
+                return None
 
     def _check_struct_satisfies(self, iface_name: str, struct: StructLiteral) -> None:
         sym = self.symbols.lookup(iface_name)

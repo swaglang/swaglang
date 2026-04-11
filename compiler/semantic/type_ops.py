@@ -62,6 +62,8 @@ def is_assignable(target: Type, source: Type) -> bool:
         return target == BaseType.ERROR or isinstance(target, UserType)
     if target == BaseType.ERROR and source == BaseType.STRING:
         return True
+    if target == BaseType.FLOAT and source == BaseType.INT:
+        return True  # implicit widening; CastExpr inserted by ASTTransformer
     return target == source
 
 def element_type(t: Type) -> Optional[Type]:

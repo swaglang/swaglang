@@ -387,3 +387,10 @@ class TernaryExpr(Expr):
     condition: Expr
     true_expr: Expr
     false_expr: Expr
+
+@dataclass
+class CastExpr(Expr):
+    """implicit type coercion inserted by the type-dependent analysis pass.
+    Never appears in user source — only injected by ASTTransformer."""
+    expr: Expr
+    to: Type

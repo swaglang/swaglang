@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from compiler.ast.nodes import (
     ASTNode, ArrayLiteral, ArrayType, BaseType, BinaryExpr, BoolLiteral,
-    Break, CodeBlock, Continue, Defer, DoWhileLoop, FieldAccessor, FloatLiteral,
-    ForInLoop, ForLoop, FuncCall, FuncDecl, IfElse, IndexAccessor,
+    Break, CastExpr, CodeBlock, Continue, Defer, DoWhileLoop, FieldAccessor,
+    FloatLiteral, ForInLoop, ForLoop, FuncCall, FuncDecl, IfElse, IndexAccessor,
     IntLiteral, InterfaceDecl, InterfaceField, MapField, MapLiteral,
     MapType, MultiReturnType, MultiVarAssign, MultiVarDecl,
     NoAcsModeVarDecl, NullLiteral, ParamDecl, PostfixExpr, Prog,
@@ -16,16 +16,21 @@ class _Label(ASTNode):
     label: str
     child: ASTNode
 
-def print_ast(node: ASTNode) -> None:
-    _print(node, prefix="", is_last=True)
+def print_ast(node: ASTNode, types=None) -> None:
+    _print(node, prefix="", is_last=True, types=types)
 
-def _print(node: ASTNode, prefix: str, is_last: bool) -> None:
+def _print(node: ASTNode, prefix: str, is_last: bool, types=None) -> None:
     connector = "└ " if is_last else "├ "
-    print(prefix + connector + _label(node))
+    label = _label(node)
+    if types is not None:
+        t = types.get(node)
+        if t is not None:
+            label += f" [{_format_type(t)}]"
+    print(prefix + connector + label)
     children = _children(node)
     new_prefix = prefix + ("  " if is_last else "│ ")
     for i, child in enumerate(children):
-        _print(child, new_prefix, i == len(children) - 1)
+        _print(child, new_prefix, i == len(children) - 1, types)
 
 def _format_type(t) -> str:
     match t:
@@ -106,6 +111,8 @@ def _label(node: ASTNode) -> str:
             return f"PostfixExpr: {op.value}"
         case TernaryExpr():
             return "TernaryExpr"
+        case CastExpr(to=to):
+            return f"CastExpr: → {_format_type(to)}"
         case FuncCall(func=func):
             return f"FuncCall: {func}"
         case VarRef(name=name, accessors=accessors):
@@ -225,6 +232,8 @@ def _children(node: ASTNode) -> list[ASTNode]:
                 _Label("True", true),
                 _Label("False", false),
             ]
+        case CastExpr(expr=expr):
+            return [expr]
         case FuncCall(args=args):
             return args
         case VarRef():
