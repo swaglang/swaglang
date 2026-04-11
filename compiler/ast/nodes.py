@@ -47,6 +47,8 @@ Type = BaseType | UserType | ArrayType | MapType | SetType
 
 class ASTNode:
     """base class for all AST nodes"""
+    line: int = 0
+    col: int = 0
 
 class FuncStmt(ASTNode):
     """a statement inside a function body"""
@@ -389,3 +391,10 @@ class TernaryExpr(Expr):
     condition: Expr
     true_expr: Expr
     false_expr: Expr
+
+@dataclass
+class CastExpr(Expr):
+    """implicit type coercion inserted by the type-dependent analysis pass.
+    Never appears in user source — only injected by ASTTransformer."""
+    expr: Expr
+    to: Type
