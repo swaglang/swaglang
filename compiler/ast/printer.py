@@ -2,9 +2,9 @@ from dataclasses import dataclass
 from compiler.ast.nodes import (
     ASTNode, ArrayLiteral, ArrayType, BaseType, BinaryExpr, BoolLiteral,
     Break, CastExpr, CodeBlock, Continue, Defer, DoWhileLoop, FieldAccessor,
-    FloatLiteral, ForInLoop, ForLoop, FuncCall, FuncDecl, IfElse, IndexAccessor,
-    IntLiteral, InterfaceDecl, InterfaceField, MapField, MapLiteral,
-    MapType, MultiReturnType, MultiVarAssign, MultiVarDecl,
+    FloatLiteral, ForInLoop, ForLoop, FuncCall, FuncDecl, IfElse,
+    IndexAccessor, IntLiteral, InterfaceDecl, InterfaceField, MapField,
+    MapLiteral, MapType, MultiReturnType, MultiVarAssign, MultiVarDecl,
     NoAcsModeVarDecl, NullLiteral, ParamDecl, PostfixExpr, Prog,
     Return, SetLiteral, SetType, SingleReturnType, StringLiteral,
     StructField, StructLiteral, TernaryExpr, UnaryExpr, UserType,
@@ -111,8 +111,6 @@ def _label(node: ASTNode) -> str:
             return f"PostfixExpr: {op.value}"
         case TernaryExpr():
             return "TernaryExpr"
-        case CastExpr(to=to):
-            return f"CastExpr: → {_format_type(to)}"
         case FuncCall(func=func):
             return f"FuncCall: {func}"
         case VarRef(name=name, accessors=accessors):
@@ -152,6 +150,8 @@ def _label(node: ASTNode) -> str:
             return f"BoolLiteral: {'true' if val else 'false'}"
         case NullLiteral():
             return "NullLiteral"
+        case CastExpr(to=to):
+            return f"CastExpr: → {_format_type(to)}"
         case _Label(label=label):
             return label
         case _:
@@ -232,8 +232,6 @@ def _children(node: ASTNode) -> list[ASTNode]:
                 _Label("True", true),
                 _Label("False", false),
             ]
-        case CastExpr(expr=expr):
-            return [expr]
         case FuncCall(args=args):
             return args
         case VarRef():
@@ -258,6 +256,8 @@ def _children(node: ASTNode) -> list[ASTNode]:
             return []
         case NullLiteral():
             return []
+        case CastExpr(expr=expr):
+            return [expr]
         case _Label(child=child):
             return [child]
         case _:

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
 
@@ -18,7 +18,14 @@ class Symbol:
     type: Optional[Type] # None for FUNCTION and INTERFACE
     is_mutable: bool
     decl_node: Optional[ASTNode] # None only for built-ins
-    defined_at: tuple[int, int] = field(default_factory=lambda: (0, 0))
+
+    @property
+    def defined_at(self) -> tuple[int, int]:
+        """Source position of this symbol's declaration (line, col).
+        Returns (0, 0) for built-ins or until AST nodes carry positions."""
+        if self.decl_node is not None:
+            return (self.decl_node.line, self.decl_node.col)
+        return (0, 0)
 
 class Scope:
     def __init__(self) -> None:
@@ -58,5 +65,11 @@ class SymbolTable:
         return None
 
     def lookup_at(self, line: int, col: int) -> Optional[Symbol]:
-        """LSP hook — returns None until AST nodes carry source positions."""
+        """Return the symbol whose declaration starts at exactly (line, col).
+        Scans from innermost to outermost scope"""
+        for scope in reversed(self._scopes):
+            for sym in scope._symbols.values():
+                if sym.decl_node is not None:
+                    if sym.decl_node.line == line and sym.decl_node.col == col:
+                        return sym
         return None

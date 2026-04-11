@@ -47,6 +47,8 @@ Type = BaseType | UserType | ArrayType | MapType | SetType
 
 class ASTNode:
     """base class for all AST nodes"""
+    line: int = 0
+    col: int = 0
 
 class FuncStmt(ASTNode):
     """a statement inside a function body"""

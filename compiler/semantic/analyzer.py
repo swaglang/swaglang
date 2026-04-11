@@ -29,6 +29,7 @@ class SemanticAnalyzer:
         self.errors: list[SemanticError] = []
         self._loop_depth: int = 0
         self._current_return_type: Optional[ReturnType] = None
+        self._current_node = None  # last-seen AST node; used for error positions
 
     def analyze(self, prog: Prog) -> tuple[SymbolTable, TypeTable, list[SemanticError]]:
         self._pre_pass(prog)
@@ -38,6 +39,7 @@ class SemanticAnalyzer:
         """Hoist all top-level FuncDecl and InterfaceDecl into global scope
         before the main walk, enabling forward references."""
         for stmt in prog.stmts:
+            self._current_node = stmt
             match stmt:
                 case FuncDecl(name=name):
                     sym = Symbol(
@@ -163,6 +165,7 @@ class SemanticAnalyzer:
             self._check_func_stmt(stmt)
 
     def _check_func_stmt(self, node) -> None:
+        self._current_node = node
         match node:
             case FuncDecl():
                 self._check_func_decl(node, nested=True)
@@ -478,6 +481,7 @@ class SemanticAnalyzer:
         return t if t is not None else BaseType.ERROR
 
     def _infer_expr_inner(self, node: Expr) -> Optional[Type]:
+        self._current_node = node
         match node:
             case IntLiteral():
                 return BaseType.INT
@@ -494,13 +498,13 @@ class SemanticAnalyzer:
             case FuncCall():
                 return self._infer_func_call(node)
             case BinaryExpr(left=left, op=op, right=right):
-                return self._infer_binary(node, left, op, right)
+                return self._infer_binary(left, op, right)
             case UnaryExpr(op=op, operand=operand):
-                return self._infer_unary(node, op, operand)
+                return self._infer_unary(op, operand)
             case PostfixExpr(operand=var, op=op):
-                return self._infer_postfix(node, var, op)
+                return self._infer_postfix(var, op)
             case TernaryExpr(condition=cond, true_expr=t_expr, false_expr=f_expr):
-                return self._infer_ternary(node, cond, t_expr, f_expr)
+                return self._infer_ternary(cond, t_expr, f_expr)
             case ArrayLiteral(elements=elems):
                 return self._infer_array_literal(elems)
             case SetLiteral(elements=elems):
@@ -514,7 +518,7 @@ class SemanticAnalyzer:
             case _:
                 return BaseType.ERROR
 
-    def _infer_binary(self, node, left, op, right) -> Type:
+    def _infer_binary(self, left, op, right) -> Type:
         lt = self._infer_expr(left)
         rt = self._infer_expr(right)
         result = binary_result_type(op, lt, rt)
@@ -526,7 +530,7 @@ class SemanticAnalyzer:
             return BaseType.ERROR
         return result
 
-    def _infer_unary(self, node, op, operand) -> Type:
+    def _infer_unary(self, op, operand) -> Type:
         ot = self._infer_expr(operand)
         result = unary_result_type(op, ot)
         if result is None:
@@ -537,7 +541,7 @@ class SemanticAnalyzer:
             return BaseType.ERROR
         return result
 
-    def _infer_postfix(self, node, var, op) -> Type:
+    def _infer_postfix(self, var, op) -> Type:
         var_type = self._infer_expr(var)
         sym = self.symbols.lookup(var.name)
         if sym is not None and not sym.is_mutable:
@@ -549,7 +553,7 @@ class SemanticAnalyzer:
             )
         return var_type
 
-    def _infer_ternary(self, node, cond, t_expr, f_expr) -> Type:
+    def _infer_ternary(self, cond, t_expr, f_expr) -> Type:
         cond_type = self._infer_expr(cond)
         if cond_type != BaseType.BOOL and cond_type != BaseType.ERROR:
             self._error("ternary condition must be bool", "TypeError")
@@ -765,10 +769,14 @@ class SemanticAnalyzer:
         return UserType(anon_name)
 
     def _error(self, message: str, kind: str) -> None:
+        n = self._current_node
+        line = n.line if n is not None else 0
+        col  = n.col  if n is not None else 0
+        loc  = f"{self.filename}:{line}:{col}" if line else self.filename
         self.errors.append(SemanticError(
             kind=kind,
             filename=self.filename,
-            line=0,
-            column=0,
-            message=f"[{kind}] {self.filename}: {message}",
+            line=line,
+            column=col,
+            message=f"[{kind}] {loc}: {message}",
         ))
