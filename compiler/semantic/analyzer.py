@@ -620,7 +620,12 @@ class SemanticAnalyzer:
             match acc:
                 case IndexAccessor(index=idx):
                     if idx is not None:
-                        self._infer_expr(idx)
+                        idx_type = self._infer_expr(idx)
+                        if idx_type != BaseType.INT and idx_type != BaseType.ERROR:
+                            self._error(
+                                f"index must be 'int', got '{fmt_type(idx_type)}'",
+                                "TypeError",
+                            )
                     match current:
                         case ArrayType(element=e):
                             current = e

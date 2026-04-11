@@ -54,6 +54,8 @@ def unary_result_type(op: UnaryOp, operand: Type) -> Optional[Type]:
     match op:
         case UnaryOp.NOT:
             return BaseType.BOOL if operand == BaseType.BOOL else None
+        case UnaryOp.NEG:
+            return operand if is_numeric(operand) else None
         case _:
             return None
 
