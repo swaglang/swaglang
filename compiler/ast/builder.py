@@ -7,14 +7,17 @@ from compiler.ast.nodes import (
     ForInLoop, ForLoop, FuncCall, FuncDecl, IfElse, IndexAccessor,
     IntLiteral, InterfaceDecl, InterfaceField, MapField, MapLiteral,
     MapType, MultiReturnType, MultiVarAssign, MultiVarDecl,
-    NoAcsModeVarDecl, NullLiteral, ParamDecl, PostfixExpr, PostfixOp,
-    Prog, Return, ReturnType, SetLiteral, SetType, SingleReturnType,
-    StringLiteral, StructField, StructLiteral, TernaryExpr, Type,
-    UnaryExpr, UnaryOp, UserType, VarAssign, VarDecl, VarRef,
+    GlobalVarDecl, NoAcsModeVarDecl, NullLiteral, ParamDecl, PostfixExpr,
+    PostfixOp, Prog, Return, ReturnType, SetLiteral, SetType,
+    SingleReturnType, StringLiteral, StructField, StructLiteral, TernaryExpr,
+    Type, UnaryExpr, UnaryOp, UserType, VarAssign, VarDecl, VarRef,
     VoidReturnType, WhileLoop,
 )
 
 class ASTBuilder(SwagLangParserVisitor):
+    def __init__(self):
+        self._func_depth: int = 0  # >0 when inside a function body
+
     def _set_pos(self, node: ASTNode, ctx) -> None:
         """Copy the start-token position from an ANTLR context to an AST node."""
         tok = ctx.start
@@ -53,11 +56,14 @@ class ASTBuilder(SwagLangParserVisitor):
         return node
 
     def visitFunc_decl(self, ctx) -> FuncDecl:
+        self._func_depth += 1
+        body = self.visit(ctx.code_block())
+        self._func_depth -= 1
         node = FuncDecl(
             return_type=self.visit(ctx.return_type()),
             name=ctx.IDENT().getText(),
             params=[self.visit(p) for p in ctx.param_decl()],
-            body=self.visit(ctx.code_block()),
+            body=body,
         )
         self._set_pos(node, ctx)
         return node
@@ -124,14 +130,21 @@ class ASTBuilder(SwagLangParserVisitor):
         self._set_pos(node, ctx)
         return node
 
-    def visitVar_decl(self, ctx) -> VarDecl | MultiVarDecl:
+    def visitVar_decl(self, ctx) -> GlobalVarDecl | VarDecl | MultiVarDecl:
         mod = AccessMod(ctx.ACCESS_MOD().getText())
         idents = ctx.IDENT()
         if len(idents) >= 2:
-            node: VarDecl | MultiVarDecl = MultiVarDecl(
+            node: GlobalVarDecl | VarDecl | MultiVarDecl = MultiVarDecl(
                 access_mod=mod,
                 names=[i.getText() for i in idents],
                 val=self.visit(ctx.func_call()),
+            )
+        elif self._func_depth == 0:
+            node = GlobalVarDecl(
+                access_mod=mod,
+                name=idents[0].getText(),
+                type_ann=self.visit(ctx.type_ann()) if ctx.type_ann() else None,
+                val=self.visit(ctx.expr()),
             )
         else:
             node = VarDecl(
