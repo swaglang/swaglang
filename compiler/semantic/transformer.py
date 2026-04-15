@@ -14,7 +14,7 @@ from typing import Optional
 from compiler.ast.nodes import (
     ArrayLiteral, BaseType, BinaryExpr, CastExpr, CodeBlock, Defer,
     DoWhileLoop, Expr, FieldAccessor, ForInLoop, ForLoop,
-    FuncCall, FuncDecl, IfElse, IndexAccessor, MapLiteral,
+    FuncCall, FuncDecl, GlobalVarDecl, IfElse, IndexAccessor, MapLiteral,
     NoAcsModeVarDecl, PostfixExpr, Prog, Return, ReturnType,
     SetLiteral, SingleReturnType, StructLiteral, TernaryExpr, Type,
     UnaryExpr, VarAssign, VarDecl, VarRef, VoidReturnType, WhileLoop,
@@ -37,8 +37,13 @@ class ASTTransformer:
         match node:
             case FuncDecl():
                 self._func_decl(node)
-            case VarDecl():
-                self._var_decl(node)
+            case GlobalVarDecl():
+                self._global_var_decl(node)
+
+    def _global_var_decl(self, node: GlobalVarDecl) -> None:
+        node.val = self._expr(node.val, want=node.type_ann)
+        if node.type_ann is None:
+            node.type_ann = self.types.get(node.val)
 
     def _func_decl(self, node: FuncDecl) -> None:
         prev = self._current_return_type

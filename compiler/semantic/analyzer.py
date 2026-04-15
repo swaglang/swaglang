@@ -5,8 +5,8 @@ from compiler.ast.nodes import (
     AccessMod, ArrayLiteral, ArrayType, BaseType, BinaryExpr, BoolLiteral,
     Break, CodeBlock, Continue, Defer, DoWhileLoop, Expr,
     FieldAccessor, FloatLiteral, ForInLoop, ForLoop, FuncCall, FuncDecl,
-    IfElse, IndexAccessor, InterfaceDecl, InterfaceField, IntLiteral,
-    MapField, MapLiteral, MapType, MultiReturnType, MultiVarAssign,
+    GlobalVarDecl, IfElse, IndexAccessor, InterfaceDecl, InterfaceField,
+    IntLiteral, MapField, MapLiteral, MapType, MultiReturnType, MultiVarAssign,
     MultiVarDecl, NoAcsModeVarDecl, NullLiteral, ParamDecl, PostfixExpr,
     Prog, Return, SetLiteral, SetType, SingleReturnType, StringLiteral,
     StructLiteral, TernaryExpr, Type, UnaryExpr, UserType,
@@ -69,8 +69,8 @@ class SemanticAnalyzer:
                     self._check_func_decl(stmt, nested=False)
                 case InterfaceDecl():
                     self._check_interface_decl(stmt)
-                case VarDecl():
-                    self._check_var_decl(stmt)
+                case GlobalVarDecl():
+                    self._check_global_var_decl(stmt)
                 case _:
                     pass
 
@@ -199,6 +199,35 @@ class SemanticAnalyzer:
                 self._infer_expr(e)
             case Expr():
                 self._infer_expr(node)
+
+    def _check_global_var_decl(self, node: GlobalVarDecl) -> None:
+        self._current_node = node
+        val_type = self._infer_expr(node.val)
+
+        if node.type_ann is not None:
+            if isinstance(node.type_ann, UserType) and isinstance(node.val, StructLiteral):
+                self._check_struct_satisfies(node.type_ann.name, node.val)
+            elif not isinstance(node.val, NullLiteral) and not is_assignable(node.type_ann, val_type):
+                self._error(
+                    f"cannot assign '{fmt_type(val_type)}' to '{fmt_type(node.type_ann)}'",
+                    "TypeError",
+                )
+            declared_type = node.type_ann
+        else:
+            if isinstance(node.val, StructLiteral):
+                declared_type = self._make_anon_struct_type(node.name, node.val)
+            else:
+                declared_type = val_type
+
+        sym = Symbol(
+            name=node.name,
+            kind=SymbolKind.VARIABLE,
+            type=declared_type,
+            is_mutable=(node.access_mod == AccessMod.LET),
+            decl_node=node,
+        )
+        if not self.symbols.define(sym):
+            self._error(f"'{node.name}' already declared in this scope", "RedefinitionError")
 
     def _check_var_decl(self, node: VarDecl) -> None:
         val_type = self._infer_expr(node.val)

@@ -207,8 +207,16 @@ class VarRef(Expr):
     accessors: List[Accessor] = field(default_factory=list)
 
 @dataclass
-class VarDecl(PureStmt, PureFuncStmt):
-    """variable declaration statement"""
+class GlobalVarDecl(PureStmt):
+    """top-level (global) variable declaration"""
+    access_mod: AccessMod
+    name: str
+    type_ann: Optional[Type]
+    val: Expr
+
+@dataclass
+class VarDecl(PureFuncStmt):
+    """local variable declaration (inside a function body)"""
     access_mod: AccessMod
     name: str
     type_ann: Optional[Type]

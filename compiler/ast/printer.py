@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from compiler.ast.nodes import (
     ASTNode, ArrayLiteral, ArrayType, BaseType, BinaryExpr, BoolLiteral,
     Break, CastExpr, CodeBlock, Continue, Defer, DoWhileLoop, FieldAccessor,
-    FloatLiteral, ForInLoop, ForLoop, FuncCall, FuncDecl, IfElse,
-    IndexAccessor, IntLiteral, InterfaceDecl, InterfaceField, MapField,
+    FloatLiteral, ForInLoop, ForLoop, FuncCall, FuncDecl, GlobalVarDecl,
+    IfElse, IndexAccessor, IntLiteral, InterfaceDecl, InterfaceField, MapField,
     MapLiteral, MapType, MultiReturnType, MultiVarAssign, MultiVarDecl,
     NoAcsModeVarDecl, NullLiteral, ParamDecl, PostfixExpr, Prog,
     Return, SetLiteral, SetType, SingleReturnType, StringLiteral,
@@ -71,7 +71,10 @@ def _label(node: ASTNode) -> str:
         case InterfaceField(name=name, type_ann=t, optional=opt):
             q = "?" if opt else ""
             return f"InterfaceField: {name}{q}: {_format_type(t)}"
-        case VarDecl(access_mod=mod, name=name, type_ann=t, val=val):
+        case GlobalVarDecl(access_mod=mod, name=name, type_ann=t):
+            t_str = _format_type(t) if t else "inferred"
+            return f"GlobalVarDecl: {mod.value} {name}: {t_str}"
+        case VarDecl(access_mod=mod, name=name, type_ann=t):
             t_str = _format_type(t) if t else "inferred"
             return f"VarDecl: {mod.value} {name}: {t_str}"
         case MultiVarDecl(access_mod=mod, names=names, val=val):
@@ -171,6 +174,8 @@ def _children(node: ASTNode) -> list[ASTNode]:
             return fields
         case InterfaceField():
             return []
+        case GlobalVarDecl(val=val):
+            return [val]
         case VarDecl(val=val):
             return [val]
         case MultiVarDecl(val=val):
