@@ -13,13 +13,13 @@ from compiler.ast.nodes import (
     VarAssign, VarDecl, VarRef, VoidReturnType, WhileLoop, ReturnType,
 )
 from compiler.errors.errors import SemanticError
+from compiler.semantic.builtins import builtin_symbols
 from compiler.semantic.symbols import Symbol, SymbolKind, SymbolTable
 from compiler.semantic.type_table import TypeTable
 from compiler.semantic.type_ops import (
     binary_result_type, fmt_type, is_assignable, is_numeric, unary_result_type,
 )
 
-_BUILTINS = frozenset({"println", "printf", "print", "range", "len"})
 
 class SemanticAnalyzer:
     def __init__(self, filename: str) -> None:
@@ -32,6 +32,8 @@ class SemanticAnalyzer:
         self._current_node = None  # last-seen AST node; used for error positions
 
     def analyze(self, prog: Prog) -> tuple[SymbolTable, TypeTable, list[SemanticError]]:
+        for sym in builtin_symbols():
+            self.symbols.define(sym)
         self._pre_pass(prog)
         self._check_prog(prog)
         return self.symbols, self.types, self.errors
@@ -693,9 +695,6 @@ class SemanticAnalyzer:
             for arg in node.args:
                 self._infer_expr(arg)
 
-        if node.func in _BUILTINS:
-            infer_args()
-            return None  # void — don't annotate in tree
 
         func_sym = self.symbols.lookup(node.func)
         if func_sym is None:
@@ -709,8 +708,9 @@ class SemanticAnalyzer:
             return BaseType.ERROR
 
         if func_sym.decl_node is None:
+            # polymorphic builtin (e.g. println) — accept any args, return void
             infer_args()
-            return BaseType.ERROR
+            return None
 
         func_decl: FuncDecl = func_sym.decl_node  # type: ignore[assignment]
 
