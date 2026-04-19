@@ -26,6 +26,7 @@ from compiler.ast.nodes import (
     VarDecl,
     VarRef
 )
+from compiler.llvm.builtins import BUILTINS
 from compiler.semantic.symbols import SymbolTable
 from compiler.semantic.type_table import TypeTable
 
@@ -135,14 +136,9 @@ class LLVMCompiler:
 
     def _func_call(self, node: FuncCall):
         fn_name = node.func
-        # TODO fix print call
-        match fn_name:
-            case "print":
-                self._block_top_level(self._print(node.args, False))
-                return
-            case "println":
-                self._block_top_level(self._print(node.args, True))
-                return
+        if fn_name in BUILTINS:
+            BUILTINS[fn_name](self, node.args)
+            return
         function = self._symbols.lookup(fn_name)
         if function is None:
             print("Something is very wrong 1, function is None (_func_call)")
@@ -162,21 +158,6 @@ class LLVMCompiler:
         self._block_top_level(call_str)
         return reg
 
-    def _print(self, args: List[Expr], newLine: bool):
-        arg = args[0]
-        type = self._types.get(arg)
-        val = self._expr(arg)
-        newln = "" if newLine else "_inline"
-
-        match type:
-            case BaseType.INT:
-                return f"call i32 (ptr, ...) @printf(ptr @fmt_int{newln}, i64 {val})"
-            case BaseType.FLOAT:
-                return (
-                    f"call i32 (ptr, ...) @printf(ptr @fmt_float{newln}, double {val})"
-                )
-            case BaseType.STRING:
-                return f"call i32 (ptr, ...) @printf(ptr @fmt_str{newln}, ptr {val})"
 
     def _llvm_type(self, type: Type) -> str:
         match type:
