@@ -5,6 +5,7 @@ from compiler.lexer.SwagLangLexer import SwagLangLexer
 from compiler.lexer.SwagLangParser import SwagLangParser
 from compiler.ast.builder import ASTBuilder
 from compiler.errors.listener import SwagErrorListener
+from compiler.llvm.llvm import LLVMCompiler
 from compiler.semantic.analyzer import SemanticAnalyzer
 from compiler.semantic.transformer import ASTTransformer
 
@@ -49,7 +50,12 @@ def main():
 
     ASTTransformer(types, symbols).transform(ast)
 
-    print_ast(ast, types)
+    # print_ast(ast, types)
+
+    llvm_compiler = LLVMCompiler(ast, types, symbols)
+    llvm_ir = llvm_compiler.compile()
+    print(llvm_ir)
+
 
 
 if __name__ == "__main__":
