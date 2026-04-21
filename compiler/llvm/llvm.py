@@ -6,7 +6,10 @@ from compiler.ast.nodes import (
     Break,
     Continue,
     Expr,
+    ForLoop,
     IfElse,
+    PostfixExpr,
+    PostfixOp,
     VoidReturnType,
     FuncStmt,
     SingleReturnType,
@@ -243,8 +246,12 @@ class LLVMCompiler:
                 self._break()
             case Continue():
                 self._continue()
+            case PostfixExpr():
+                self._postfix_op(node)
+            case ForLoop():
+                self._for(node)
             case _:
-                print(f"implement func_stmt{type(node)}")
+                print(f"implement func_stmt{type(node)} l{node.line} c{node.col}")
 
     def _var_decl(self, node: VarDecl):
         t = self._llvm_type(node.type_ann)
@@ -297,6 +304,8 @@ class LLVMCompiler:
                 return self._binary_op(op, left, right)
             case FuncCall():
                 return self._func_call(node)
+            case PostfixExpr():
+                self._postfix_op(node)
             case _:
                 print(f"implement expr: {type(node)}")
         return ""
@@ -438,3 +447,40 @@ class LLVMCompiler:
             return
         self._block_top_level(f"br label %{condition_label}")
 
+    def _postfix_op(self, postfix: PostfixExpr):
+        match postfix.op:
+            case PostfixOp.INC:
+                op = "add"
+            case PostfixOp.DEC:
+                op = "sub"
+
+        ptr = f"{postfix.operand.name}.addr"
+        reg_old = f"{ptr}.old"
+        reg_new = f"{ptr}.new"
+        llvm_t = self._llvm_type(self._types.get(postfix.operand))
+        self._block_top_level(f"{reg_old} = load {llvm_t}, ptr %{ptr}, align 8")
+        self._block_top_level(f"{reg_new} = {op} {llvm_t} {reg_old}, 1")
+        self._block_top_level(f"store {llvm_t} {reg_new}, ptr %{ptr}")
+
+    def _for(self, loop: ForLoop):
+        n = self._unique()
+        condition_label = f"for_cond_{n}"
+        end_label = f"for_end_{n}"
+        body_label = f"for_body_{n}"
+        self._set_condition_label(condition_label)
+        self._set_end_label(end_label)
+
+        if loop.init:
+            self._var_decl(loop.init)
+        self._set_condition_label(condition_label)
+        if loop.condition:
+            cond = self._expr(loop.condition)
+            cond = self._expr(loop.condition)
+            self._block_top_level(f"br i1 {cond}, label %{body_label}, label %{end_label}")
+        self._label(condition_label)
+        if loop.update:
+            self._expr(loop.update)
+        self._label(body_label)
+        self._code_block(loop.body)
+        self._block_top_level(f"br label %{condition_label}")
+        self._label(end_label)
