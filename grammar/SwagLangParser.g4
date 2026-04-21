@@ -168,7 +168,7 @@ do_while_loop
     ;
 
 for_loop
-    : (FOR (no_acs_mode_var_decl? SEMICOL condition? SEMICOL expr? ) | forin) loop_body
+    : (FOR (no_acs_mode_var_decl? SEMICOL condition? SEMICOL (var_assign | expr)? ) | forin) loop_body
     ;
 
 forin

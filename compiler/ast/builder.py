@@ -396,10 +396,16 @@ class ASTBuilder(SwagLangParserVisitor):
             self._set_pos(node, ctx)
             return node
 
+        if ctx.var_assign():
+            update = self.visit(ctx.var_assign())
+        elif ctx.expr():
+            update = self.visit(ctx.expr())
+        else:
+            update = None
         node = ForLoop(
             init=self.visit(ctx.no_acs_mode_var_decl()) if ctx.no_acs_mode_var_decl() else None,
             condition=self.visit(ctx.condition().expr()) if ctx.condition() else None,
-            update=self.visit(ctx.expr()) if ctx.expr() else None,
+            update=update,
             body=self.visit(ctx.loop_body().code_block()),
         )
         self._set_pos(node, ctx)

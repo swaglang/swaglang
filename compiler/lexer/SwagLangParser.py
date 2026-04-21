@@ -10,7 +10,7 @@ else:
 
 def serializedATN():
     return [
-        4,1,63,597,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,
+        4,1,63,598,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,
         6,2,7,7,7,2,8,7,8,2,9,7,9,2,10,7,10,2,11,7,11,2,12,7,12,2,13,7,13,
         2,14,7,14,2,15,7,15,2,16,7,16,2,17,7,17,2,18,7,18,2,19,7,19,2,20,
         7,20,2,21,7,21,2,22,7,22,2,23,7,23,2,24,7,24,2,25,7,25,2,26,7,26,
@@ -53,19 +53,19 @@ def serializedATN():
         1,28,1,28,1,28,1,28,4,28,458,8,28,11,28,12,28,459,1,28,1,28,1,28,
         3,28,465,8,28,1,29,1,29,1,30,1,30,1,31,1,31,1,31,3,31,474,8,31,1,
         32,1,32,1,32,1,32,1,33,1,33,1,33,1,33,1,33,1,33,1,33,1,34,1,34,3,
-        34,489,8,34,1,34,1,34,3,34,493,8,34,1,34,1,34,3,34,497,8,34,1,34,
-        3,34,500,8,34,1,34,1,34,1,35,1,35,1,35,1,35,1,35,3,35,509,8,35,1,
-        36,1,36,1,36,1,36,1,36,1,36,1,36,5,36,518,8,36,10,36,12,36,521,9,
-        36,1,36,1,36,3,36,525,8,36,1,37,1,37,1,38,1,38,1,38,1,38,1,38,1,
-        38,1,38,1,38,1,38,1,38,1,38,1,38,1,38,1,38,1,38,3,38,544,8,38,1,
+        34,489,8,34,1,34,1,34,3,34,493,8,34,1,34,1,34,1,34,3,34,498,8,34,
+        1,34,3,34,501,8,34,1,34,1,34,1,35,1,35,1,35,1,35,1,35,3,35,510,8,
+        35,1,36,1,36,1,36,1,36,1,36,1,36,1,36,5,36,519,8,36,10,36,12,36,
+        522,9,36,1,36,1,36,3,36,526,8,36,1,37,1,37,1,38,1,38,1,38,1,38,1,
+        38,1,38,1,38,1,38,1,38,1,38,1,38,1,38,1,38,1,38,1,38,3,38,545,8,
         38,1,38,1,38,1,38,1,38,1,38,1,38,1,38,1,38,1,38,1,38,1,38,1,38,1,
-        38,1,38,1,38,1,38,1,38,1,38,1,38,1,38,1,38,1,38,1,38,5,38,570,8,
-        38,10,38,12,38,573,9,38,1,39,1,39,1,39,1,39,1,39,1,40,1,40,1,40,
-        1,40,1,41,1,41,1,41,5,41,587,8,41,10,41,12,41,590,9,41,1,41,3,41,
-        593,8,41,3,41,595,8,41,1,41,0,1,76,42,0,2,4,6,8,10,12,14,16,18,20,
+        38,1,38,1,38,1,38,1,38,1,38,1,38,1,38,1,38,1,38,1,38,1,38,5,38,571,
+        8,38,10,38,12,38,574,9,38,1,39,1,39,1,39,1,39,1,39,1,40,1,40,1,40,
+        1,40,1,41,1,41,1,41,5,41,588,8,41,10,41,12,41,591,9,41,1,41,3,41,
+        594,8,41,3,41,596,8,41,1,41,0,1,76,42,0,2,4,6,8,10,12,14,16,18,20,
         22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60,62,64,
         66,68,70,72,74,76,78,80,82,0,5,1,0,34,39,1,0,47,48,1,0,44,46,1,0,
-        55,56,1,0,49,54,655,0,84,1,0,0,0,2,91,1,0,0,0,4,94,1,0,0,0,6,99,
+        55,56,1,0,49,54,657,0,84,1,0,0,0,2,91,1,0,0,0,4,94,1,0,0,0,6,99,
         1,0,0,0,8,101,1,0,0,0,10,113,1,0,0,0,12,126,1,0,0,0,14,128,1,0,0,
         0,16,131,1,0,0,0,18,133,1,0,0,0,20,135,1,0,0,0,22,146,1,0,0,0,24,
         177,1,0,0,0,26,179,1,0,0,0,28,186,1,0,0,0,30,195,1,0,0,0,32,204,
@@ -73,8 +73,8 @@ def serializedATN():
         0,0,42,334,1,0,0,0,44,338,1,0,0,0,46,372,1,0,0,0,48,406,1,0,0,0,
         50,410,1,0,0,0,52,418,1,0,0,0,54,448,1,0,0,0,56,464,1,0,0,0,58,466,
         1,0,0,0,60,468,1,0,0,0,62,473,1,0,0,0,64,475,1,0,0,0,66,479,1,0,
-        0,0,68,499,1,0,0,0,70,503,1,0,0,0,72,510,1,0,0,0,74,526,1,0,0,0,
-        76,543,1,0,0,0,78,574,1,0,0,0,80,579,1,0,0,0,82,594,1,0,0,0,84,85,
+        0,0,68,500,1,0,0,0,70,504,1,0,0,0,72,511,1,0,0,0,74,527,1,0,0,0,
+        76,544,1,0,0,0,78,575,1,0,0,0,80,580,1,0,0,0,82,595,1,0,0,0,84,85,
         3,2,1,0,85,86,5,0,0,1,86,1,1,0,0,0,87,90,3,4,2,0,88,90,5,60,0,0,
         89,87,1,0,0,0,89,88,1,0,0,0,90,93,1,0,0,0,91,89,1,0,0,0,91,92,1,
         0,0,0,92,3,1,0,0,0,93,91,1,0,0,0,94,95,3,6,3,0,95,5,1,0,0,0,96,100,
@@ -198,42 +198,43 @@ def serializedATN():
         485,5,25,0,0,485,67,1,0,0,0,486,488,5,10,0,0,487,489,3,50,25,0,488,
         487,1,0,0,0,488,489,1,0,0,0,489,490,1,0,0,0,490,492,5,23,0,0,491,
         493,3,74,37,0,492,491,1,0,0,0,492,493,1,0,0,0,493,494,1,0,0,0,494,
-        496,5,23,0,0,495,497,3,76,38,0,496,495,1,0,0,0,496,497,1,0,0,0,497,
-        500,1,0,0,0,498,500,3,70,35,0,499,486,1,0,0,0,499,498,1,0,0,0,500,
-        501,1,0,0,0,501,502,3,60,30,0,502,69,1,0,0,0,503,504,5,10,0,0,504,
-        505,5,21,0,0,505,508,5,11,0,0,506,509,3,78,39,0,507,509,3,52,26,
-        0,508,506,1,0,0,0,508,507,1,0,0,0,509,71,1,0,0,0,510,511,5,7,0,0,
-        511,512,3,74,37,0,512,519,3,58,29,0,513,514,5,8,0,0,514,515,3,74,
-        37,0,515,516,3,58,29,0,516,518,1,0,0,0,517,513,1,0,0,0,518,521,1,
-        0,0,0,519,517,1,0,0,0,519,520,1,0,0,0,520,524,1,0,0,0,521,519,1,
-        0,0,0,522,523,5,9,0,0,523,525,3,58,29,0,524,522,1,0,0,0,524,525,
-        1,0,0,0,525,73,1,0,0,0,526,527,3,76,38,0,527,75,1,0,0,0,528,529,
-        6,38,-1,0,529,530,5,24,0,0,530,531,3,76,38,0,531,532,5,25,0,0,532,
-        544,1,0,0,0,533,544,3,36,18,0,534,544,3,78,39,0,535,544,3,52,26,
-        0,536,537,3,52,26,0,537,538,7,1,0,0,538,544,1,0,0,0,539,540,5,42,
-        0,0,540,544,3,76,38,9,541,542,5,56,0,0,542,544,3,76,38,8,543,528,
-        1,0,0,0,543,533,1,0,0,0,543,534,1,0,0,0,543,535,1,0,0,0,543,536,
-        1,0,0,0,543,539,1,0,0,0,543,541,1,0,0,0,544,571,1,0,0,0,545,546,
-        10,7,0,0,546,547,5,43,0,0,547,570,3,76,38,7,548,549,10,6,0,0,549,
-        550,7,2,0,0,550,570,3,76,38,7,551,552,10,5,0,0,552,553,7,3,0,0,553,
-        570,3,76,38,6,554,555,10,4,0,0,555,556,7,4,0,0,556,570,3,76,38,5,
-        557,558,10,3,0,0,558,559,5,40,0,0,559,570,3,76,38,4,560,561,10,2,
-        0,0,561,562,5,41,0,0,562,570,3,76,38,3,563,564,10,1,0,0,564,565,
-        5,30,0,0,565,566,3,76,38,0,566,567,5,22,0,0,567,568,3,76,38,2,568,
-        570,1,0,0,0,569,545,1,0,0,0,569,548,1,0,0,0,569,551,1,0,0,0,569,
-        554,1,0,0,0,569,557,1,0,0,0,569,560,1,0,0,0,569,563,1,0,0,0,570,
-        573,1,0,0,0,571,569,1,0,0,0,571,572,1,0,0,0,572,77,1,0,0,0,573,571,
-        1,0,0,0,574,575,5,21,0,0,575,576,5,24,0,0,576,577,3,82,41,0,577,
-        578,5,25,0,0,578,79,1,0,0,0,579,580,5,21,0,0,580,581,5,22,0,0,581,
-        582,3,30,15,0,582,81,1,0,0,0,583,588,3,76,38,0,584,585,5,31,0,0,
-        585,587,3,76,38,0,586,584,1,0,0,0,587,590,1,0,0,0,588,586,1,0,0,
-        0,588,589,1,0,0,0,589,592,1,0,0,0,590,588,1,0,0,0,591,593,5,31,0,
-        0,592,591,1,0,0,0,592,593,1,0,0,0,593,595,1,0,0,0,594,583,1,0,0,
-        0,594,595,1,0,0,0,595,83,1,0,0,0,70,89,91,99,107,113,126,141,144,
-        154,158,160,173,177,195,201,212,215,221,228,233,239,242,248,262,
-        268,276,282,286,288,293,303,311,317,321,323,328,342,350,356,360,
-        362,367,376,384,390,394,396,401,413,425,427,434,444,448,459,464,
-        473,488,492,496,499,508,519,524,543,569,571,588,592,594
+        497,5,23,0,0,495,498,3,56,28,0,496,498,3,76,38,0,497,495,1,0,0,0,
+        497,496,1,0,0,0,497,498,1,0,0,0,498,501,1,0,0,0,499,501,3,70,35,
+        0,500,486,1,0,0,0,500,499,1,0,0,0,501,502,1,0,0,0,502,503,3,60,30,
+        0,503,69,1,0,0,0,504,505,5,10,0,0,505,506,5,21,0,0,506,509,5,11,
+        0,0,507,510,3,78,39,0,508,510,3,52,26,0,509,507,1,0,0,0,509,508,
+        1,0,0,0,510,71,1,0,0,0,511,512,5,7,0,0,512,513,3,74,37,0,513,520,
+        3,58,29,0,514,515,5,8,0,0,515,516,3,74,37,0,516,517,3,58,29,0,517,
+        519,1,0,0,0,518,514,1,0,0,0,519,522,1,0,0,0,520,518,1,0,0,0,520,
+        521,1,0,0,0,521,525,1,0,0,0,522,520,1,0,0,0,523,524,5,9,0,0,524,
+        526,3,58,29,0,525,523,1,0,0,0,525,526,1,0,0,0,526,73,1,0,0,0,527,
+        528,3,76,38,0,528,75,1,0,0,0,529,530,6,38,-1,0,530,531,5,24,0,0,
+        531,532,3,76,38,0,532,533,5,25,0,0,533,545,1,0,0,0,534,545,3,36,
+        18,0,535,545,3,78,39,0,536,545,3,52,26,0,537,538,3,52,26,0,538,539,
+        7,1,0,0,539,545,1,0,0,0,540,541,5,42,0,0,541,545,3,76,38,9,542,543,
+        5,56,0,0,543,545,3,76,38,8,544,529,1,0,0,0,544,534,1,0,0,0,544,535,
+        1,0,0,0,544,536,1,0,0,0,544,537,1,0,0,0,544,540,1,0,0,0,544,542,
+        1,0,0,0,545,572,1,0,0,0,546,547,10,7,0,0,547,548,5,43,0,0,548,571,
+        3,76,38,7,549,550,10,6,0,0,550,551,7,2,0,0,551,571,3,76,38,7,552,
+        553,10,5,0,0,553,554,7,3,0,0,554,571,3,76,38,6,555,556,10,4,0,0,
+        556,557,7,4,0,0,557,571,3,76,38,5,558,559,10,3,0,0,559,560,5,40,
+        0,0,560,571,3,76,38,4,561,562,10,2,0,0,562,563,5,41,0,0,563,571,
+        3,76,38,3,564,565,10,1,0,0,565,566,5,30,0,0,566,567,3,76,38,0,567,
+        568,5,22,0,0,568,569,3,76,38,2,569,571,1,0,0,0,570,546,1,0,0,0,570,
+        549,1,0,0,0,570,552,1,0,0,0,570,555,1,0,0,0,570,558,1,0,0,0,570,
+        561,1,0,0,0,570,564,1,0,0,0,571,574,1,0,0,0,572,570,1,0,0,0,572,
+        573,1,0,0,0,573,77,1,0,0,0,574,572,1,0,0,0,575,576,5,21,0,0,576,
+        577,5,24,0,0,577,578,3,82,41,0,578,579,5,25,0,0,579,79,1,0,0,0,580,
+        581,5,21,0,0,581,582,5,22,0,0,582,583,3,30,15,0,583,81,1,0,0,0,584,
+        589,3,76,38,0,585,586,5,31,0,0,586,588,3,76,38,0,587,585,1,0,0,0,
+        588,591,1,0,0,0,589,587,1,0,0,0,589,590,1,0,0,0,590,593,1,0,0,0,
+        591,589,1,0,0,0,592,594,5,31,0,0,593,592,1,0,0,0,593,594,1,0,0,0,
+        594,596,1,0,0,0,595,584,1,0,0,0,595,596,1,0,0,0,596,83,1,0,0,0,70,
+        89,91,99,107,113,126,141,144,154,158,160,173,177,195,201,212,215,
+        221,228,233,239,242,248,262,268,276,282,286,288,293,303,311,317,
+        321,323,328,342,350,356,360,362,367,376,384,390,394,396,401,413,
+        425,427,434,444,448,459,464,473,488,492,497,500,509,520,525,544,
+        570,572,589,593,595
     ]
 
 class SwagLangParser ( Parser ):
@@ -3404,6 +3405,10 @@ class SwagLangParser ( Parser ):
             return self.getTypedRuleContext(SwagLangParser.ConditionContext,0)
 
 
+        def var_assign(self):
+            return self.getTypedRuleContext(SwagLangParser.Var_assignContext,0)
+
+
         def expr(self):
             return self.getTypedRuleContext(SwagLangParser.ExprContext,0)
 
@@ -3435,7 +3440,7 @@ class SwagLangParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 499
+            self.state = 500
             self._errHandler.sync(self)
             la_ = self._interp.adaptivePredict(self._input,60,self._ctx)
             if la_ == 1:
@@ -3462,23 +3467,27 @@ class SwagLangParser ( Parser ):
 
                 self.state = 494
                 self.match(SwagLangParser.SEMICOL)
-                self.state = 496
+                self.state = 497
                 self._errHandler.sync(self)
                 la_ = self._interp.adaptivePredict(self._input,59,self._ctx)
                 if la_ == 1:
                     self.state = 495
+                    self.var_assign()
+
+                elif la_ == 2:
+                    self.state = 496
                     self.expr(0)
 
 
                 pass
 
             elif la_ == 2:
-                self.state = 498
+                self.state = 499
                 self.forin()
                 pass
 
 
-            self.state = 501
+            self.state = 502
             self.loop_body()
         except RecognitionException as re:
             localctx.exception = re
@@ -3539,22 +3548,22 @@ class SwagLangParser ( Parser ):
         self.enterRule(localctx, 70, self.RULE_forin)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 503
-            self.match(SwagLangParser.FOR)
             self.state = 504
-            self.match(SwagLangParser.IDENT)
+            self.match(SwagLangParser.FOR)
             self.state = 505
+            self.match(SwagLangParser.IDENT)
+            self.state = 506
             self.match(SwagLangParser.IN)
-            self.state = 508
+            self.state = 509
             self._errHandler.sync(self)
             la_ = self._interp.adaptivePredict(self._input,61,self._ctx)
             if la_ == 1:
-                self.state = 506
+                self.state = 507
                 self.func_call()
                 pass
 
             elif la_ == 2:
-                self.state = 507
+                self.state = 508
                 self.var_ref()
                 pass
 
@@ -3628,33 +3637,33 @@ class SwagLangParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 510
-            self.match(SwagLangParser.IF)
             self.state = 511
-            self.condition()
+            self.match(SwagLangParser.IF)
             self.state = 512
+            self.condition()
+            self.state = 513
             self.conditional_body()
-            self.state = 519
+            self.state = 520
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             while _la==8:
-                self.state = 513
-                self.match(SwagLangParser.ELSE_IF)
                 self.state = 514
-                self.condition()
+                self.match(SwagLangParser.ELSE_IF)
                 self.state = 515
+                self.condition()
+                self.state = 516
                 self.conditional_body()
-                self.state = 521
+                self.state = 522
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
 
-            self.state = 524
+            self.state = 525
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             if _la==9:
-                self.state = 522
-                self.match(SwagLangParser.ELSE)
                 self.state = 523
+                self.match(SwagLangParser.ELSE)
+                self.state = 524
                 self.conditional_body()
 
 
@@ -3704,7 +3713,7 @@ class SwagLangParser ( Parser ):
         self.enterRule(localctx, 74, self.RULE_condition)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 526
+            self.state = 527
             self.expr(0)
         except RecognitionException as re:
             localctx.exception = re
@@ -3833,37 +3842,37 @@ class SwagLangParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 543
+            self.state = 544
             self._errHandler.sync(self)
             la_ = self._interp.adaptivePredict(self._input,64,self._ctx)
             if la_ == 1:
-                self.state = 529
-                self.match(SwagLangParser.L_PAREN)
                 self.state = 530
-                self.expr(0)
+                self.match(SwagLangParser.L_PAREN)
                 self.state = 531
+                self.expr(0)
+                self.state = 532
                 self.match(SwagLangParser.R_PAREN)
                 pass
 
             elif la_ == 2:
-                self.state = 533
+                self.state = 534
                 self.data()
                 pass
 
             elif la_ == 3:
-                self.state = 534
+                self.state = 535
                 self.func_call()
                 pass
 
             elif la_ == 4:
-                self.state = 535
+                self.state = 536
                 self.var_ref()
                 pass
 
             elif la_ == 5:
-                self.state = 536
-                self.var_ref()
                 self.state = 537
+                self.var_ref()
+                self.state = 538
                 _la = self._input.LA(1)
                 if not(_la==47 or _la==48):
                     self._errHandler.recoverInline(self)
@@ -3873,22 +3882,22 @@ class SwagLangParser ( Parser ):
                 pass
 
             elif la_ == 6:
-                self.state = 539
-                self.match(SwagLangParser.NOT)
                 self.state = 540
+                self.match(SwagLangParser.NOT)
+                self.state = 541
                 self.expr(9)
                 pass
 
             elif la_ == 7:
-                self.state = 541
-                self.match(SwagLangParser.MINUS)
                 self.state = 542
+                self.match(SwagLangParser.MINUS)
+                self.state = 543
                 self.expr(8)
                 pass
 
 
             self._ctx.stop = self._input.LT(-1)
-            self.state = 571
+            self.state = 572
             self._errHandler.sync(self)
             _alt = self._interp.adaptivePredict(self._input,66,self._ctx)
             while _alt!=2 and _alt!=ATN.INVALID_ALT_NUMBER:
@@ -3896,121 +3905,121 @@ class SwagLangParser ( Parser ):
                     if self._parseListeners is not None:
                         self.triggerExitRuleEvent()
                     _prevctx = localctx
-                    self.state = 569
+                    self.state = 570
                     self._errHandler.sync(self)
                     la_ = self._interp.adaptivePredict(self._input,65,self._ctx)
                     if la_ == 1:
                         localctx = SwagLangParser.ExprContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expr)
-                        self.state = 545
+                        self.state = 546
                         if not self.precpred(self._ctx, 7):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 7)")
-                        self.state = 546
-                        self.match(SwagLangParser.EXP)
                         self.state = 547
+                        self.match(SwagLangParser.EXP)
+                        self.state = 548
                         self.expr(7)
                         pass
 
                     elif la_ == 2:
                         localctx = SwagLangParser.ExprContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expr)
-                        self.state = 548
+                        self.state = 549
                         if not self.precpred(self._ctx, 6):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 6)")
-                        self.state = 549
+                        self.state = 550
                         _la = self._input.LA(1)
                         if not((((_la) & ~0x3f) == 0 and ((1 << _la) & 123145302310912) != 0)):
                             self._errHandler.recoverInline(self)
                         else:
                             self._errHandler.reportMatch(self)
                             self.consume()
-                        self.state = 550
+                        self.state = 551
                         self.expr(7)
                         pass
 
                     elif la_ == 3:
                         localctx = SwagLangParser.ExprContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expr)
-                        self.state = 551
+                        self.state = 552
                         if not self.precpred(self._ctx, 5):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 5)")
-                        self.state = 552
+                        self.state = 553
                         _la = self._input.LA(1)
                         if not(_la==55 or _la==56):
                             self._errHandler.recoverInline(self)
                         else:
                             self._errHandler.reportMatch(self)
                             self.consume()
-                        self.state = 553
+                        self.state = 554
                         self.expr(6)
                         pass
 
                     elif la_ == 4:
                         localctx = SwagLangParser.ExprContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expr)
-                        self.state = 554
+                        self.state = 555
                         if not self.precpred(self._ctx, 4):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 4)")
-                        self.state = 555
+                        self.state = 556
                         _la = self._input.LA(1)
                         if not((((_la) & ~0x3f) == 0 and ((1 << _la) & 35465847065542656) != 0)):
                             self._errHandler.recoverInline(self)
                         else:
                             self._errHandler.reportMatch(self)
                             self.consume()
-                        self.state = 556
+                        self.state = 557
                         self.expr(5)
                         pass
 
                     elif la_ == 5:
                         localctx = SwagLangParser.ExprContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expr)
-                        self.state = 557
+                        self.state = 558
                         if not self.precpred(self._ctx, 3):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 3)")
-                        self.state = 558
-                        self.match(SwagLangParser.AND)
                         self.state = 559
+                        self.match(SwagLangParser.AND)
+                        self.state = 560
                         self.expr(4)
                         pass
 
                     elif la_ == 6:
                         localctx = SwagLangParser.ExprContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expr)
-                        self.state = 560
+                        self.state = 561
                         if not self.precpred(self._ctx, 2):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 2)")
-                        self.state = 561
-                        self.match(SwagLangParser.OR)
                         self.state = 562
+                        self.match(SwagLangParser.OR)
+                        self.state = 563
                         self.expr(3)
                         pass
 
                     elif la_ == 7:
                         localctx = SwagLangParser.ExprContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expr)
-                        self.state = 563
+                        self.state = 564
                         if not self.precpred(self._ctx, 1):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 1)")
-                        self.state = 564
-                        self.match(SwagLangParser.QUESTION)
                         self.state = 565
-                        self.expr(0)
+                        self.match(SwagLangParser.QUESTION)
                         self.state = 566
-                        self.match(SwagLangParser.COLUMN)
+                        self.expr(0)
                         self.state = 567
+                        self.match(SwagLangParser.COLUMN)
+                        self.state = 568
                         self.expr(2)
                         pass
 
              
-                self.state = 573
+                self.state = 574
                 self._errHandler.sync(self)
                 _alt = self._interp.adaptivePredict(self._input,66,self._ctx)
 
@@ -4069,13 +4078,13 @@ class SwagLangParser ( Parser ):
         self.enterRule(localctx, 78, self.RULE_func_call)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 574
-            self.match(SwagLangParser.IDENT)
             self.state = 575
-            self.match(SwagLangParser.L_PAREN)
+            self.match(SwagLangParser.IDENT)
             self.state = 576
-            self.params()
+            self.match(SwagLangParser.L_PAREN)
             self.state = 577
+            self.params()
+            self.state = 578
             self.match(SwagLangParser.R_PAREN)
         except RecognitionException as re:
             localctx.exception = re
@@ -4129,11 +4138,11 @@ class SwagLangParser ( Parser ):
         self.enterRule(localctx, 80, self.RULE_param_decl)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 579
-            self.match(SwagLangParser.IDENT)
             self.state = 580
-            self.match(SwagLangParser.COLUMN)
+            self.match(SwagLangParser.IDENT)
             self.state = 581
+            self.match(SwagLangParser.COLUMN)
+            self.state = 582
             self.type_ann()
         except RecognitionException as re:
             localctx.exception = re
@@ -4191,30 +4200,30 @@ class SwagLangParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 594
+            self.state = 595
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             if (((_la) & ~0x3f) == 0 and ((1 << _la) & 1080868317561356288) != 0):
-                self.state = 583
+                self.state = 584
                 self.expr(0)
-                self.state = 588
+                self.state = 589
                 self._errHandler.sync(self)
                 _alt = self._interp.adaptivePredict(self._input,67,self._ctx)
                 while _alt!=2 and _alt!=ATN.INVALID_ALT_NUMBER:
                     if _alt==1:
-                        self.state = 584
-                        self.match(SwagLangParser.COMMA)
                         self.state = 585
+                        self.match(SwagLangParser.COMMA)
+                        self.state = 586
                         self.expr(0) 
-                    self.state = 590
+                    self.state = 591
                     self._errHandler.sync(self)
                     _alt = self._interp.adaptivePredict(self._input,67,self._ctx)
 
-                self.state = 592
+                self.state = 593
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
                 if _la==31:
-                    self.state = 591
+                    self.state = 592
                     self.match(SwagLangParser.COMMA)
 
 
