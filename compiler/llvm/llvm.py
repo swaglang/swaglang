@@ -43,7 +43,7 @@ class Block:
 
 
 class LLVMCompiler:
-    _HEADER = "; https://github.com/swaglang/swaglang to https://github.com/llvm/llvm-project compiler\n"
+    _HEADER = "; https://github.com/swaglang/swaglang to https://github.com/llvm/llvm-project compiler"
 
     def __init__(self, ast: ASTNode, types: TypeTable, symbols: SymbolTable):
         self._ast = ast
@@ -185,6 +185,11 @@ class LLVMCompiler:
         args_str = ", ".join(arg_strs)
 
         self._code_block(node.body)
+        # TODO hacky, functions always need a ret at the end, but it's not required for void
+        if isinstance(node.return_type, VoidReturnType):
+            last = self._blocks[-1].instructions
+            if not last or not last[-1].strip().startswith("ret"):
+                self._block_top_level("ret void")
         body = self._exit_scope()
 
         return f"define {return_type} @{node.name}({args_str}) nounwind {{\n{body}\n}}\n"
@@ -279,6 +284,8 @@ class LLVMCompiler:
         match self._types.get(left):
             case BaseType.INT:
                 return self._binary_op_int(op, left_val, right_val)
+            case BaseType.BOOL:
+                return self._binary_op_bool(op, left_val, right_val)
             case _:
                 print(f"implement binary op {op}")
                 return ""
@@ -310,15 +317,56 @@ class LLVMCompiler:
             case BinaryOp.GTE:
                 self._block_top_level(f"{reg} = icmp sge i64 {left}, {right}")
             case _:
-                print(f"implement binary op {op} for int")
+                print(f"implement int binary op {op} for int")
+        return reg
+
+    def _binary_op_bool(self, op: BinaryOp, left: str, right: str):
+        reg = self._reg()
+        match op:
+            case BinaryOp.AND:
+                self._block_top_level(f"{reg} = and i1 {left}, {right}")
+            case BinaryOp.OR:
+                self._block_top_level(f"{reg} = or i1 {left}, {right}")
+            case BinaryOp.EQ:
+                self._block_top_level(f"{reg} = icmp eq i1 {left}, {right}")
+            case BinaryOp.NEQ:
+                self._block_top_level(f"{reg} = icmp ne i1 {left}, {right}")
+            case BinaryOp.NOT:
+                self._block_top_level(f"{reg} = xor i1 {left}, 1")
+            case _:
+                print(f"implement bool binary op {op} for bool (should not happen)")
         return reg
 
     def _ifelse(self, node: IfElse):
+        end_label = f"end_{self._unique()}"
+        elif_labels = [f"elif_{self._unique()}" for _ in node.elif_clauses]
+        else_label = f"else_{self._unique()}" if node.else_body else end_label
+        if_label = f"if_{self._unique()}"
+
+        first = elif_labels[0] if elif_labels else else_label
         cond = self._expr(node.condition)
-        n = self._unique()
-        if_label = f"if_true_{n}"
-        else_label = f"if_false_{n}" if node.else_body else f"end_{n}"
-        self._block_top_level(f"br i1 {cond}, label %{if_label}, label %{else_label}")
+        self._block_top_level(f"br i1 {cond}, label %{if_label}, label %{first}")
+
+        # elif checks
+        for i, (label, clause) in enumerate(zip(elif_labels, node.elif_clauses)):
+            next_label = elif_labels[i + 1] if i + 1 < len(elif_labels) else else_label
+            self._label(label)
+            cond = self._expr(clause.condition)
+            self._block_top_level(f"br i1 {cond}, label %{label}_body, label %{next_label}")
+
+        # bodies
         self._label(if_label)
         self._code_block(node.if_body)
-        self._label(f"end_{n}")
+        self._block_top_level(f"br label %{end_label}")
+
+        for label, clause in zip(elif_labels, node.elif_clauses):
+            self._label(f"{label}_body")
+            self._code_block(clause.body)
+            self._block_top_level(f"br label %{end_label}")
+
+        if node.else_body:
+            self._label(else_label)
+            self._code_block(node.else_body)
+            self._block_top_level(f"br label %{end_label}")
+
+        self._label(end_label)
