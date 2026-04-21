@@ -3,6 +3,8 @@ from typing import List
 from compiler.ast.nodes import (
     BinaryExpr,
     BinaryOp,
+    Break,
+    Continue,
     Expr,
     IfElse,
     VoidReturnType,
@@ -24,7 +26,8 @@ from compiler.ast.nodes import (
     StringLiteral,
     Type,
     VarDecl,
-    VarRef
+    VarRef,
+    WhileLoop
 )
 from compiler.llvm.builtins import BUILTINS
 from compiler.semantic.symbols import SymbolTable
@@ -34,12 +37,26 @@ from compiler.semantic.type_table import TypeTable
 class Block:
     def __init__(self):
         self.instructions: list[str] = []
+        self._condition_label = None # for break in loops
+        self._end_label = None # for continue in loops
 
     def add_instruction(self, instruction: str):
         self.instructions.append(instruction)
 
     def emit_instructions(self):
         return "\n".join(self.instructions)
+    
+    def condition_label(self):
+        return self._condition_label
+    
+    def set_condition_label(self, label: str):
+        self._condition_label = label
+
+    def end_label(self):
+        return self._end_label
+    
+    def set_end_label(self, label: str):
+        self._end_label = label
 
 
 class LLVMCompiler:
@@ -87,6 +104,18 @@ class LLVMCompiler:
 
     def _label(self, name: str):
         self._blocks[-1].add_instruction(f"{name}:")
+
+    def _set_condition_label(self, label: str):
+        self._blocks[-1].set_condition_label(label)
+    
+    def _condition_label(self):
+        return self._blocks[-1].condition_label()
+    
+    def _set_end_label(self, label: str):
+        self._blocks[-1].set_end_label(label)
+
+    def _end_label(self):
+        return self._blocks[-1].end_label()
 
     def _codegen(self, node: ASTNode) -> str:
         match node:
@@ -208,6 +237,12 @@ class LLVMCompiler:
                 self._return(node)
             case IfElse():
                 self._ifelse(node)
+            case WhileLoop():
+                self._while(node)
+            case Break():
+                self._break()
+            case Continue():
+                self._continue()
             case _:
                 print(f"implement func_stmt{type(node)}")
 
@@ -370,3 +405,36 @@ class LLVMCompiler:
             self._block_top_level(f"br label %{end_label}")
 
         self._label(end_label)
+
+    def _while(self, node: WhileLoop):
+        n = self._unique()
+        condition_label = f"while_cond_{n}"
+        body_label = f"while_body_{n}"
+        end_label = f"while_end_{n}"
+        self._set_condition_label(condition_label)
+        self._set_end_label(end_label)
+
+        self._label(condition_label)
+        cond = self._expr(node.condition)
+        self._block_top_level(f"br i1 {cond}, label %{body_label}, label %{end_label}")
+
+        self._label(body_label)
+        self._code_block(node.body)
+        self._block_top_level(f"br label %{condition_label}")
+
+        self._label(end_label)
+
+    def _break(self):
+        end_label = self._end_label()
+        if end_label is None:
+            print("?! break statement not within a loop")
+            return
+        self._block_top_level(f"br label %{end_label}")
+
+    def _continue(self):
+        condition_label = self._condition_label()
+        if condition_label is None:
+            print("?! continue statement not within a loop")
+            return
+        self._block_top_level(f"br label %{condition_label}")
+
