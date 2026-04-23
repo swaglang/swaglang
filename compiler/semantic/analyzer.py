@@ -449,7 +449,11 @@ class SemanticAnalyzer:
             if cond_type != BaseType.BOOL and cond_type != BaseType.ERROR:
                 self._error("for condition must be bool", "TypeError")
         if node.update is not None:
-            self._infer_expr(node.update)
+            from compiler.ast.nodes import VarAssign
+            if isinstance(node.update, VarAssign):
+                self._check_var_assign(node.update)
+            else:
+                self._infer_expr(node.update)
         self._loop_depth += 1
         self._check_code_block(node.body)
         self._loop_depth -= 1
