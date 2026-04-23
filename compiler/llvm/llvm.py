@@ -34,7 +34,7 @@ from compiler.ast.nodes import (
     VarRef,
     WhileLoop
 )
-from compiler.llvm.builtins import BUILTINS
+from compiler.llvm.llvm_builtins import BUILTINS
 from compiler.semantic.symbols import SymbolTable
 from compiler.semantic.type_table import TypeTable
 
@@ -66,6 +66,8 @@ class Block:
 
 class LLVMCompiler:
     _HEADER = "; https://github.com/swaglang/swaglang to https://github.com/llvm/llvm-project compiler"
+    _STRING_TYPE_NAME = "%Str"
+    _STRING_DECL = f"\n{_STRING_TYPE_NAME} = type {{ i64, ptr }}\n"
 
     def __init__(self, ast: ASTNode, types: TypeTable, symbols: SymbolTable):
         self._ast = ast
@@ -144,6 +146,7 @@ class LLVMCompiler:
         out = ""
 
         self._global_declare(self._HEADER)
+        self._global_declare(self._STRING_DECL)
         self._global_declare(self._printf_decl())
 
         for stmt in prog.stmts:
@@ -155,12 +158,12 @@ class LLVMCompiler:
         printf_decl = "declare i32 @printf(i8*, ...)  ; printf decl\n\n"
         printf_decl += '@fmt_int = private constant [6 x i8] c"%lld\\0A\\00"\n'
         printf_decl += '@fmt_float = private constant [4 x i8] c"%f\\0A\\00"\n'
-        printf_decl += '@fmt_str = private constant [4 x i8] c"%s\\0A\\00"\n'
+        printf_decl += '@fmt_str = private constant [6 x i8] c"%.*s\\0A\\00"\n'
         printf_decl += '@fmt_true = private constant [6 x i8] c"true\\0A\\00"\n'
         printf_decl += '@fmt_false = private constant [7 x i8] c"false\\0A\\00"\n'
         printf_decl += '@fmt_int_inline = private constant [5 x i8] c"%lld\\00"\n'
         printf_decl += '@fmt_float_inline = private constant [3 x i8] c"%f\\00"\n'
-        printf_decl += '@fmt_str_inline = private constant [3 x i8] c"%s\\00"\n'
+        printf_decl += '@fmt_str_inline = private constant [5 x i8] c"%.*s\\00"\n'
         printf_decl += '@fmt_true_inline = private constant [5 x i8] c"true\\00"\n'
         printf_decl += '@fmt_false_inline = private constant [6 x i8] c"false\\00"\n'
         return printf_decl
@@ -172,8 +175,8 @@ class LLVMCompiler:
     def _func_call(self, node: FuncCall):
         fn_name = node.func
         if fn_name in BUILTINS:
-            BUILTINS[fn_name](self, node.args)
-            return
+            return BUILTINS[fn_name](self, node.args)
+
         function = self._symbols.lookup(fn_name)
         if function is None:
             print("Something is very wrong 1, function is None (_func_call)")
@@ -203,7 +206,7 @@ class LLVMCompiler:
             case BaseType.BOOL:
                 return "i1"
             case BaseType.STRING:
-                return "ptr"
+                return self._STRING_TYPE_NAME
             case _:
                 raise NotImplementedError(f"LLVM type for {type} not implemented yet")
 
@@ -288,23 +291,13 @@ class LLVMCompiler:
             case FloatLiteral(val=v):
                 return str(v)
             case StringLiteral(val=v):
-                n = len(v) + 1
-                name = self._unique()
-                self._global_declare(
-                    f'@str{name} = private constant [{n} x i8] c"{v}\\00"'
-                )
-                reg = self._reg()
-                ptr_aq = (
-                    f"{reg} = getelementptr [{n} x i8], ptr @str{name}, i32 0, i32 0"
-                )
-                self._block_top_level(ptr_aq)
-                return reg
+                return self._string_struct(v)
             case VarRef():
-                reg = self._reg()
+                string_ptr = self._reg()
                 llvm_t = self._llvm_type(self._types.get(node))
                 ptr = f"%{node.name}.addr" if node.name in self._locals else f"@{node.name}"
-                self._block_top_level(f"{reg} = load {llvm_t}, ptr {ptr}, align 8")
-                return reg
+                self._block_top_level(f"{string_ptr} = load {llvm_t}, ptr {ptr}, align 8")
+                return string_ptr
             case BinaryExpr(op=op, left=left, right=right):
                 return self._binary_op(op, left, right)
             case FuncCall():
@@ -314,6 +307,23 @@ class LLVMCompiler:
             case _:
                 print(f"implement expr: {type(node)}")
         return ""
+
+    def _string_struct(self, string: str) -> str:
+        str_l = len(string)
+        n = self._unique()
+        self._global_declare(
+            f'@str{n} = private constant [{str_l} x i8] c"{string}"'
+        )
+        string_ptr = self._reg()
+        ptr_aq = (
+            f"{string_ptr} = getelementptr [{str_l} x i8], ptr @str{n}, i32 0, i32 0"
+        )
+        self._block_top_level(ptr_aq)
+        sized_reg = f"%len_ass_{n}"
+        self._block_top_level(f"{sized_reg} = insertvalue {self._STRING_TYPE_NAME} undef, i64 {str_l}, 0")
+        populated_reg = f"%str_ass_{n}"
+        self._block_top_level(f"{populated_reg} = insertvalue {self._STRING_TYPE_NAME} {sized_reg}, ptr {string_ptr}, 1")
+        return populated_reg
 
     def _return(self, node: Return):
         match len(node.vals):

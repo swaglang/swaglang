@@ -1,6 +1,6 @@
 import argparse
 from antlr4 import FileStream, CommonTokenStream
-from compiler.ast.printer import print_ast
+# from compiler.ast.printer import print_ast
 from compiler.lexer.SwagLangLexer import SwagLangLexer
 from compiler.lexer.SwagLangParser import SwagLangParser
 from compiler.ast.builder import ASTBuilder
