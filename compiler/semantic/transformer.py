@@ -82,7 +82,12 @@ class ASTTransformer:
                 if cond:
                     node.condition = self._expr(cond)
                 if update:
-                    node.update = self._expr(update)
+                    from compiler.ast.nodes import VarAssign as _VarAssign
+                    if isinstance(update, _VarAssign):
+                        target_type = self.types.get(update.var)
+                        update.val = self._expr(update.val, want=target_type)
+                    else:
+                        node.update = self._expr(update)
                 self._code_block(body)
             case ForInLoop(body=body, iterable=iterable):
                 node.iterable = self._expr(iterable)

@@ -283,7 +283,7 @@ class ForLoop(Loop):
     """for loop statement"""
     init: Optional[NoAcsModeVarDecl]
     condition: Optional[Expr]
-    update: Optional[Expr]
+    update: Optional[Expr | VarAssign]
     body: CodeBlock
 
 @dataclass

@@ -1,12 +1,17 @@
 from typing import List
 
 from compiler.ast.nodes import (
+    AssignOp,
     BinaryExpr,
     BinaryOp,
     Break,
     Continue,
     Expr,
+    ForLoop,
     IfElse,
+    PostfixExpr,
+    PostfixOp,
+    VarAssign,
     VoidReturnType,
     FuncStmt,
     SingleReturnType,
@@ -45,16 +50,16 @@ class Block:
 
     def emit_instructions(self):
         return "\n".join(self.instructions)
-    
+
     def condition_label(self):
         return self._condition_label
-    
+
     def set_condition_label(self, label: str):
         self._condition_label = label
 
     def end_label(self):
         return self._end_label
-    
+
     def set_end_label(self, label: str):
         self._end_label = label
 
@@ -71,6 +76,7 @@ class LLVMCompiler:
         self._nesting = 0
         self._ssa = 0
         self._unique_seq = 0
+        self._locals: set[str] = set()
 
     def compile(self) -> str:
         return self._codegen(self._ast)
@@ -107,10 +113,10 @@ class LLVMCompiler:
 
     def _set_condition_label(self, label: str):
         self._blocks[-1].set_condition_label(label)
-    
+
     def _condition_label(self):
         return self._blocks[-1].condition_label()
-    
+
     def _set_end_label(self, label: str):
         self._blocks[-1].set_end_label(label)
 
@@ -203,6 +209,7 @@ class LLVMCompiler:
 
     def _func_decl(self, node: FuncDecl) -> str:
         self._reset_ssa()
+        self._locals = set()
         return_type = self._return_type(node.return_type)
         self._enter_scope()
 
@@ -243,14 +250,21 @@ class LLVMCompiler:
                 self._break()
             case Continue():
                 self._continue()
+            case PostfixExpr():
+                self._postfix_op(node)
+            case ForLoop():
+                self._for(node)
+            case VarAssign():
+                self._var_assign(node)
             case _:
-                print(f"implement func_stmt{type(node)}")
+                print(f"implement func_stmt{type(node)} l{node.line} c{node.col}")
 
     def _var_decl(self, node: VarDecl):
         t = self._llvm_type(node.type_ann)
         self._alloca_store(node.name, t, self._expr(node.val))
 
     def _alloca_store(self, name: str, llvm_type: str, val: str):
+        self._locals.add(name)
         slot = f"%{name}.addr"
         self._block_top_level(f"{slot} = alloca {llvm_type}, align 8")
         self._block_top_level(f"store {llvm_type} {val}, ptr {slot}, align 8")
@@ -288,15 +302,15 @@ class LLVMCompiler:
             case VarRef():
                 reg = self._reg()
                 llvm_t = self._llvm_type(self._types.get(node))
-                sym = self._symbols.lookup(node.name)
-                is_global = sym is not None and isinstance(sym.decl_node, GlobalVarDecl)
-                ptr = f"@{node.name}" if is_global else f"%{node.name}.addr"
+                ptr = f"%{node.name}.addr" if node.name in self._locals else f"@{node.name}"
                 self._block_top_level(f"{reg} = load {llvm_t}, ptr {ptr}, align 8")
                 return reg
             case BinaryExpr(op=op, left=left, right=right):
                 return self._binary_op(op, left, right)
             case FuncCall():
                 return self._func_call(node)
+            case PostfixExpr():
+                self._postfix_op(node)
             case _:
                 print(f"implement expr: {type(node)}")
         return ""
@@ -437,4 +451,87 @@ class LLVMCompiler:
             print("?! continue statement not within a loop")
             return
         self._block_top_level(f"br label %{condition_label}")
+
+    def _postfix_op(self, postfix: PostfixExpr):
+        match postfix.op:
+            case PostfixOp.INC:
+                op = "add"
+            case PostfixOp.DEC:
+                op = "sub"
+
+        ptr = f"{postfix.operand.name}.addr"
+        reg_old = f"{ptr}.old"
+        reg_new = f"{ptr}.new"
+        llvm_t = self._llvm_type(self._types.get(postfix.operand))
+        self._block_top_level(f"%{reg_old} = load {llvm_t}, ptr %{ptr}, align 8")
+        self._block_top_level(f"%{reg_new} = {op} {llvm_t} %{reg_old}, 1")
+        self._block_top_level(f"store {llvm_t} %{reg_new}, ptr %{ptr}")
+
+    def _for(self, loop: ForLoop):
+        n = self._unique()
+        update_label = f"for_update_{n}"
+        cond_label = f"for_cond_{n}"
+        end_label = f"for_end_{n}"
+        body_label = f"for_body_{n}"
+        if loop.update:
+            self._set_condition_label(update_label)
+        else:
+            self._set_condition_label(cond_label)
+        self._set_end_label(end_label)
+
+        if loop.init:
+            self._var_decl(loop.init)
+
+        if loop.condition:
+            self._block_top_level(f"br label %{cond_label}")
+        else:
+            self._block_top_level(f"br label %{body_label}")
+        if loop.update:
+            self._label(update_label)
+            match loop.update:
+                case VarAssign():
+                    self._var_assign(loop.update)
+                case Expr():
+                    self._expr(loop.update)
+            if loop.condition:
+                self._block_top_level(f"br label %{cond_label}")
+            else:
+                self._block_top_level(f"br label %{body_label}")
+
+        if loop.condition:
+            self._label(cond_label)
+            cond = self._expr(loop.condition)
+            self._block_top_level(f"br i1 {cond}, label %{body_label}, label %{end_label}")
+        self._label(body_label)
+        self._code_block(loop.body)
+        if loop.update:
+            self._block_top_level(f"br label %{update_label}")
+        elif loop.condition:
+            self._block_top_level(f"br label %{cond_label}")
+        else:
+            self._block_top_level(f"br label %{body_label}")
+        self._label(end_label)
+
+    def _var_assign(self, assign: VarAssign):
+        val = self._expr(assign.val)
+        llvm_t = self._llvm_type(self._types.get(assign.var))
+        if assign.op == AssignOp.ASSIGN:
+            self._block_top_level(f"store {llvm_t} {val}, ptr %{assign.var.name}.addr, align 8")
+            return
+        n = self._unique()
+        old_name = f"{assign.var.name}.old{n}"
+        new_name = f"{assign.var.name}.new{n}"
+        self._block_top_level(f"%{old_name} = load {llvm_t}, ptr %{assign.var.name}.addr, align 8")
+        match assign.op:
+            case AssignOp.ADD_ASSIGN:
+                self._block_top_level(f"%{new_name} = add {llvm_t} %{old_name}, {val}")
+            case AssignOp.SUB_ASSIGN:
+                self._block_top_level(f"%{new_name} = sub {llvm_t} %{old_name}, {val}")
+            case AssignOp.MUL_ASSIGN:
+                self._block_top_level(f"%{new_name} = mul {llvm_t} %{old_name}, {val}")
+            case AssignOp.DIV_ASSIGN:
+                self._block_top_level(f"%{new_name} = sdiv {llvm_t} %{old_name}, {val}")
+            case AssignOp.MOD_ASSIGN:
+                self._block_top_level(f"%{new_name} = srem {llvm_t} %{old_name}, {val}")
+        self._block_top_level(f"store {llvm_t} %{new_name}, ptr %{assign.var.name}.addr, align 8")
 
