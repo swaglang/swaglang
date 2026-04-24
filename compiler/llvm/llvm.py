@@ -32,7 +32,7 @@ from compiler.ast.nodes import (
     Type,
     VarDecl,
     VarRef,
-    WhileLoop
+    WhileLoop,
 )
 from compiler.llvm.llvm_builtins import BUILTINS
 from compiler.semantic.symbols import SymbolTable
@@ -42,8 +42,8 @@ from compiler.semantic.type_table import TypeTable
 class Block:
     def __init__(self):
         self.instructions: list[str] = []
-        self._condition_label = None # for break in loops
-        self._end_label = None # for continue in loops
+        self._condition_label = None  # for break in loops
+        self._end_label = None  # for continue in loops
 
     def add_instruction(self, instruction: str):
         self.instructions.append(instruction)
@@ -198,7 +198,6 @@ class LLVMCompiler:
         self._block_top_level(call_str)
         return reg
 
-
     def _llvm_type(self, type: Type) -> str:
         match type:
             case BaseType.INT:
@@ -233,7 +232,9 @@ class LLVMCompiler:
                 self._block_top_level("ret void")
         body = self._exit_scope()
 
-        return f"define {return_type} @{node.name}({args_str}) nounwind {{\n{body}\n}}\n"
+        return (
+            f"define {return_type} @{node.name}({args_str}) nounwind {{\n{body}\n}}\n"
+        )
 
     def _code_block(self, node: CodeBlock):
         for stmt in node.func_stmts:
@@ -297,8 +298,14 @@ class LLVMCompiler:
             case VarRef():
                 string_ptr = self._reg()
                 llvm_t = self._llvm_type(self._types.get(node))
-                ptr = f"%{node.name}.addr" if node.name in self._locals else f"@{node.name}"
-                self._block_top_level(f"{string_ptr} = load {llvm_t}, ptr {ptr}, align 8")
+                ptr = (
+                    f"%{node.name}.addr"
+                    if node.name in self._locals
+                    else f"@{node.name}"
+                )
+                self._block_top_level(
+                    f"{string_ptr} = load {llvm_t}, ptr {ptr}, align 8"
+                )
                 return string_ptr
             case BinaryExpr(op=op, left=left, right=right):
                 return self._binary_op(op, left, right)
@@ -313,18 +320,20 @@ class LLVMCompiler:
     def _string_struct(self, string: str) -> str:
         str_l = len(string)
         n = self._unique()
-        self._global_declare(
-            f'@str{n} = private constant [{str_l} x i8] c"{string}"'
-        )
+        self._global_declare(f'@str{n} = private constant [{str_l} x i8] c"{string}"')
         string_ptr = self._reg()
         ptr_aq = (
             f"{string_ptr} = getelementptr [{str_l} x i8], ptr @str{n}, i32 0, i32 0"
         )
         self._block_top_level(ptr_aq)
         sized_reg = f"%len_ass_{n}"
-        self._block_top_level(f"{sized_reg} = insertvalue {self._STRING_TYPE_NAME} undef, i64 {str_l}, 0")
+        self._block_top_level(
+            f"{sized_reg} = insertvalue {self._STRING_TYPE_NAME} undef, i64 {str_l}, 0"
+        )
         populated_reg = f"%str_ass_{n}"
-        self._block_top_level(f"{populated_reg} = insertvalue {self._STRING_TYPE_NAME} {sized_reg}, ptr {string_ptr}, 1")
+        self._block_top_level(
+            f"{populated_reg} = insertvalue {self._STRING_TYPE_NAME} {sized_reg}, ptr {string_ptr}, 1"
+        )
         return populated_reg
 
     def _return(self, node: Return):
@@ -408,21 +417,91 @@ class LLVMCompiler:
                 data_a = f"%concat_data_a_{n}"
                 len_b = f"%concat_len_b_{n}"
                 data_b = f"%concat_data_b_{n}"
-                self._block_top_level(f"{len_a} = extractvalue {self._STRING_TYPE_NAME} {left}, 0")
-                self._block_top_level(f"{data_a} = extractvalue {self._STRING_TYPE_NAME} {left}, 1")
-                self._block_top_level(f"{len_b} = extractvalue {self._STRING_TYPE_NAME} {right}, 0")
-                self._block_top_level(f"{data_b} = extractvalue {self._STRING_TYPE_NAME} {right}, 1")
+                self._block_top_level(
+                    f"{len_a} = extractvalue {self._STRING_TYPE_NAME} {left}, 0"
+                )
+                self._block_top_level(
+                    f"{data_a} = extractvalue {self._STRING_TYPE_NAME} {left}, 1"
+                )
+                self._block_top_level(
+                    f"{len_b} = extractvalue {self._STRING_TYPE_NAME} {right}, 0"
+                )
+                self._block_top_level(
+                    f"{data_b} = extractvalue {self._STRING_TYPE_NAME} {right}, 1"
+                )
                 new_len = f"%concat_len_{n}"
                 buf = f"%concat_buf_{n}"
                 self._block_top_level(f"{new_len} = add i64 {len_a}, {len_b}")
                 self._block_top_level(f"{buf} = call ptr @malloc(i64 {new_len})")
-                self._block_top_level(f"call void @llvm.memcpy.p0.p0.i64(ptr {buf}, ptr {data_a}, i64 {len_a}, i1 false)")
-                self._block_top_level(f"%offset_{n} = getelementptr i8, ptr {buf}, i64 {len_a}")
-                self._block_top_level(f"call void @llvm.memcpy.p0.p0.i64(ptr %offset_{n}, ptr {data_b}, i64 {len_b}, i1 false)")
+                self._block_top_level(
+                    f"call void @llvm.memcpy.p0.p0.i64(ptr {buf}, ptr {data_a}, i64 {len_a}, i1 false)"
+                )
+                self._block_top_level(
+                    f"%offset_{n} = getelementptr i8, ptr {buf}, i64 {len_a}"
+                )
+                self._block_top_level(
+                    f"call void @llvm.memcpy.p0.p0.i64(ptr %offset_{n}, ptr {data_b}, i64 {len_b}, i1 false)"
+                )
                 sized_reg = f"%concat_sized_{n}"
-                self._block_top_level(f"{sized_reg} = insertvalue {self._STRING_TYPE_NAME} undef, i64 {new_len}, 0")
+                self._block_top_level(
+                    f"{sized_reg} = insertvalue {self._STRING_TYPE_NAME} undef, i64 {new_len}, 0"
+                )
                 populated_reg = f"%concat_populated_{n}"
-                self._block_top_level(f"{populated_reg} = insertvalue {self._STRING_TYPE_NAME} {sized_reg}, ptr {buf}, 1")
+                self._block_top_level(
+                    f"{populated_reg} = insertvalue {self._STRING_TYPE_NAME} {sized_reg}, ptr {buf}, 1"
+                )
+            case BinaryOp.MUL:
+                n = self._unique()
+                len_s = f"%mul_len_{n}"
+                data_s = f"%mul_data_{n}"
+                new_len = f"%mul_newlen_{n}"
+                buf = f"%mul_buf_{n}"
+                i_slot = f"%mul_i_{n}.addr"
+                p_slot = f"%mul_ptr_{n}.addr"
+                self._block_top_level(f"{len_s}  = extractvalue %Str {left}, 0")
+                self._block_top_level(f"{data_s} = extractvalue %Str {left}, 1")
+                self._block_top_level(f"{new_len} = mul i64 {len_s}, {right}")
+                self._block_top_level(f"{buf} = call ptr @malloc(i64 {new_len})")
+                self._block_top_level(f"{i_slot} = alloca i64, align 8")
+                self._block_top_level(f"store i64 0, ptr {i_slot}, align 8")
+                self._block_top_level(f"{p_slot} = alloca ptr, align 8")
+                self._block_top_level(f"store ptr {buf}, ptr {p_slot}, align 8")
+                cond_lbl = f"mul_cond_{n}"
+                body_lbl = f"mul_body_{n}"
+                end_lbl = f"mul_end_{n}"
+                self._block_top_level(f"br label %{cond_lbl}")
+                self._label(cond_lbl)
+                i_cur = f"%mul_i_cur_{n}"
+                cmp = f"%mul_cmp_{n}"
+                self._block_top_level(f"{i_cur} = load i64, ptr {i_slot}, align 8")
+                self._block_top_level(f"{cmp} = icmp slt i64 {i_cur}, {right}")
+                self._block_top_level(
+                    f"br i1 {cmp}, label %{body_lbl}, label %{end_lbl}"
+                )
+                self._label(body_lbl)
+                cur_ptr = f"%mul_curptr_{n}"
+                next_ptr = f"%mul_nextptr_{n}"
+                i_next = f"%mul_inext_{n}"
+                self._block_top_level(f"{cur_ptr} = load ptr, ptr {p_slot}, align 8")
+                self._block_top_level(
+                    f"call void @llvm.memcpy.p0.p0.i64(ptr {cur_ptr}, ptr {data_s}, i64 {len_s}, i1 false)"
+                )
+                self._block_top_level(
+                    f"{next_ptr} = getelementptr i8, ptr {cur_ptr}, i64 {len_s}"
+                )
+                self._block_top_level(f"store ptr {next_ptr}, ptr {p_slot}, align 8")
+                self._block_top_level(f"{i_next} = add i64 {i_cur}, 1")
+                self._block_top_level(f"store i64 {i_next}, ptr {i_slot}, align 8")
+                self._block_top_level(f"br label %{cond_lbl}")
+                self._label(end_lbl)
+                tmp = f"%mul_tmp_{n}"
+                res = f"%mul_res_{n}"
+                self._block_top_level(
+                    f"{tmp} = insertvalue %Str undef, i64 {new_len}, 0"
+                )
+                self._block_top_level(f"{res} = insertvalue %Str {tmp}, ptr {buf}, 1")
+                return res
+
         return populated_reg
 
     def _ifelse(self, node: IfElse):
@@ -440,7 +519,9 @@ class LLVMCompiler:
             next_label = elif_labels[i + 1] if i + 1 < len(elif_labels) else else_label
             self._label(label)
             cond = self._expr(clause.condition)
-            self._block_top_level(f"br i1 {cond}, label %{label}_body, label %{next_label}")
+            self._block_top_level(
+                f"br i1 {cond}, label %{label}_body, label %{next_label}"
+            )
 
         # bodies
         self._label(if_label)
@@ -540,7 +621,9 @@ class LLVMCompiler:
         if loop.condition:
             self._label(cond_label)
             cond = self._expr(loop.condition)
-            self._block_top_level(f"br i1 {cond}, label %{body_label}, label %{end_label}")
+            self._block_top_level(
+                f"br i1 {cond}, label %{body_label}, label %{end_label}"
+            )
         self._label(body_label)
         self._code_block(loop.body)
         if loop.update:
@@ -565,18 +648,26 @@ class LLVMCompiler:
         llvm_t = self._llvm_type(var_type)
 
         if assign.op == AssignOp.ASSIGN:
-            self._block_top_level(f"store {llvm_t} {val}, ptr %{assign.var.name}.addr, align 8")
+            self._block_top_level(
+                f"store {llvm_t} {val}, ptr %{assign.var.name}.addr, align 8"
+            )
             return
 
         n = self._unique()
         old = f"%{assign.var.name}.old{n}"
-        self._block_top_level(f"{old} = load {llvm_t}, ptr %{assign.var.name}.addr, align 8")
+        self._block_top_level(
+            f"{old} = load {llvm_t}, ptr %{assign.var.name}.addr, align 8"
+        )
 
         if var_type == BaseType.STRING and assign.op == AssignOp.ADD_ASSIGN:
             new = self._binary_op_string(BinaryOp.ADD, old, val)
-            self._block_top_level(f"store {llvm_t} {new}, ptr %{assign.var.name}.addr, align 8")
+            self._block_top_level(
+                f"store {llvm_t} {new}, ptr %{assign.var.name}.addr, align 8"
+            )
             return
 
         binary_op = self._ASSIGN_TO_BINARY[assign.op]
         new = self._binary_op_int(binary_op, old, val)
-        self._block_top_level(f"store {llvm_t} {new}, ptr %{assign.var.name}.addr, align 8")
+        self._block_top_level(
+            f"store {llvm_t} {new}, ptr %{assign.var.name}.addr, align 8"
+        )
