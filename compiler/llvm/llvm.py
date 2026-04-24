@@ -148,6 +148,8 @@ class LLVMCompiler:
         self._global_declare(self._HEADER)
         self._global_declare(self._STRING_DECL)
         self._global_declare(self._printf_decl())
+        self._global_declare("declare ptr @malloc(i64)")
+        self._global_declare("declare void @llvm.memcpy.p0.p0.i64(ptr, ptr, i64, i1)\n")
 
         for stmt in prog.stmts:
             out += self._codegen(stmt)
@@ -345,6 +347,8 @@ class LLVMCompiler:
                 return self._binary_op_int(op, left_val, right_val)
             case BaseType.BOOL:
                 return self._binary_op_bool(op, left_val, right_val)
+            case BaseType.STRING:
+                return self._binary_op_string(op, left_val, right_val)
             case _:
                 print(f"implement binary op {op}")
                 return ""
@@ -395,6 +399,31 @@ class LLVMCompiler:
             case _:
                 print(f"implement bool binary op {op} for bool (should not happen)")
         return reg
+
+    def _binary_op_string(self, op: BinaryOp, left: str, right: str):
+        match op:
+            case BinaryOp.ADD:
+                n = self._unique()
+                len_a = f"%concat_len_a_{n}"
+                data_a = f"%concat_data_a_{n}"
+                len_b = f"%concat_len_b_{n}"
+                data_b = f"%concat_data_b_{n}"
+                self._block_top_level(f"{len_a} = extractvalue {self._STRING_TYPE_NAME} {left}, 0")
+                self._block_top_level(f"{data_a} = extractvalue {self._STRING_TYPE_NAME} {left}, 1")
+                self._block_top_level(f"{len_b} = extractvalue {self._STRING_TYPE_NAME} {right}, 0")
+                self._block_top_level(f"{data_b} = extractvalue {self._STRING_TYPE_NAME} {right}, 1")
+                new_len = f"%concat_len_{n}"
+                buf = f"%concat_buf_{n}"
+                self._block_top_level(f"{new_len} = add i64 {len_a}, {len_b}")
+                self._block_top_level(f"{buf} = call ptr @malloc(i64 {new_len})")
+                self._block_top_level(f"call void @llvm.memcpy.p0.p0.i64(ptr {buf}, ptr {data_a}, i64 {len_a}, i1 false)")
+                self._block_top_level(f"%offset_{n} = getelementptr i8, ptr {buf}, i64 {len_a}")
+                self._block_top_level(f"call void @llvm.memcpy.p0.p0.i64(ptr %offset_{n}, ptr {data_b}, i64 {len_b}, i1 false)")
+                sized_reg = f"%concat_sized_{n}"
+                self._block_top_level(f"{sized_reg} = insertvalue {self._STRING_TYPE_NAME} undef, i64 {new_len}, 0")
+                populated_reg = f"%concat_populated_{n}"
+                self._block_top_level(f"{populated_reg} = insertvalue {self._STRING_TYPE_NAME} {sized_reg}, ptr {buf}, 1")
+        return populated_reg
 
     def _ifelse(self, node: IfElse):
         end_label = f"end_{self._unique()}"
@@ -522,26 +551,32 @@ class LLVMCompiler:
             self._block_top_level(f"br label %{body_label}")
         self._label(end_label)
 
+    _ASSIGN_TO_BINARY = {
+        AssignOp.ADD_ASSIGN: BinaryOp.ADD,
+        AssignOp.SUB_ASSIGN: BinaryOp.SUB,
+        AssignOp.MUL_ASSIGN: BinaryOp.MUL,
+        AssignOp.DIV_ASSIGN: BinaryOp.DIV,
+        AssignOp.MOD_ASSIGN: BinaryOp.MOD,
+    }
+
     def _var_assign(self, assign: VarAssign):
         val = self._expr(assign.val)
-        llvm_t = self._llvm_type(self._types.get(assign.var))
+        var_type = self._types.get(assign.var)
+        llvm_t = self._llvm_type(var_type)
+
         if assign.op == AssignOp.ASSIGN:
             self._block_top_level(f"store {llvm_t} {val}, ptr %{assign.var.name}.addr, align 8")
             return
-        n = self._unique()
-        old_name = f"{assign.var.name}.old{n}"
-        new_name = f"{assign.var.name}.new{n}"
-        self._block_top_level(f"%{old_name} = load {llvm_t}, ptr %{assign.var.name}.addr, align 8")
-        match assign.op:
-            case AssignOp.ADD_ASSIGN:
-                self._block_top_level(f"%{new_name} = add {llvm_t} %{old_name}, {val}")
-            case AssignOp.SUB_ASSIGN:
-                self._block_top_level(f"%{new_name} = sub {llvm_t} %{old_name}, {val}")
-            case AssignOp.MUL_ASSIGN:
-                self._block_top_level(f"%{new_name} = mul {llvm_t} %{old_name}, {val}")
-            case AssignOp.DIV_ASSIGN:
-                self._block_top_level(f"%{new_name} = sdiv {llvm_t} %{old_name}, {val}")
-            case AssignOp.MOD_ASSIGN:
-                self._block_top_level(f"%{new_name} = srem {llvm_t} %{old_name}, {val}")
-        self._block_top_level(f"store {llvm_t} %{new_name}, ptr %{assign.var.name}.addr, align 8")
 
+        n = self._unique()
+        old = f"%{assign.var.name}.old{n}"
+        self._block_top_level(f"{old} = load {llvm_t}, ptr %{assign.var.name}.addr, align 8")
+
+        if var_type == BaseType.STRING and assign.op == AssignOp.ADD_ASSIGN:
+            new = self._binary_op_string(BinaryOp.ADD, old, val)
+            self._block_top_level(f"store {llvm_t} {new}, ptr %{assign.var.name}.addr, align 8")
+            return
+
+        binary_op = self._ASSIGN_TO_BINARY[assign.op]
+        new = self._binary_op_int(binary_op, old, val)
+        self._block_top_level(f"store {llvm_t} {new}, ptr %{assign.var.name}.addr, align 8")
