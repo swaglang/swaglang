@@ -14,6 +14,8 @@ from compiler.ast.nodes import (
     IndexAccessor,
     PostfixExpr,
     PostfixOp,
+    UnaryExpr,
+    UnaryOp,
     VarAssign,
     VoidReturnType,
     FuncStmt,
@@ -321,6 +323,8 @@ class LLVMCompiler:
                 return self._func_call(node)
             case PostfixExpr():
                 self._postfix_op(node)
+            case UnaryExpr():
+                return self._unary_expr(node)
             case _:
                 print(f"implement expr: {type(node)}")
         return ""
@@ -818,3 +822,19 @@ class LLVMCompiler:
         self._block_top_level(f"{adj} = add i64 {idx_raw}, {len_reg}")
         self._block_top_level(f"{idx} = select i1 {is_neg}, i64 {adj}, i64 {idx_raw}")
         return idx
+
+    def _unary_expr(self, node: UnaryExpr):
+        operand = self._expr(node.operand)
+        match node.op:
+            case UnaryOp.NOT:
+                reg = self._reg()
+                self._block_top_level(f"{reg} = xor i1 {operand}, 1")
+                return reg
+            case UnaryOp.NEG:
+                reg = self._reg()
+                match self._types.get(node.operand):
+                    case BaseType.INT:
+                        self._block_top_level(f"{reg} = sub i64 0, {operand}")
+                    case BaseType.FLOAT:
+                        self._block_top_level(f"{reg} = fneg double {operand}")
+                return reg
