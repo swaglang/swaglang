@@ -193,12 +193,14 @@ class IndexAccessor(Accessor):
     """accessing an element of an array"""
     var: str
     index: Optional[Expr]
+    type_ann: Optional[Type] = None
 
 @dataclass
 class FieldAccessor(Accessor):
     """accessing a field of a dictionary"""
     var: str
     field: VarRef
+    type_ann: Optional[Type] = None
 
 @dataclass
 class VarRef(Expr):

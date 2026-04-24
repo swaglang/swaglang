@@ -654,6 +654,7 @@ class SemanticAnalyzer:
         for acc in accessors:
             match acc:
                 case IndexAccessor(index=idx):
+                    acc.type_ann = current
                     if idx is not None:
                         idx_type = self._infer_expr(idx)
                         if idx_type != BaseType.INT and idx_type != BaseType.ERROR:
@@ -675,6 +676,7 @@ class SemanticAnalyzer:
                                 )
                             return BaseType.ERROR
                 case FieldAccessor(field=field_vr):
+                    acc.type_ann = current
                     match current:
                         case UserType(name=iname):
                             all_fields = self._collect_all_fields(iname)

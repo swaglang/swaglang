@@ -1,6 +1,8 @@
 from typing import List
 
 from compiler.ast.nodes import (
+    ArrayLiteral,
+    ArrayType,
     AssignOp,
     BinaryExpr,
     BinaryOp,
@@ -9,6 +11,7 @@ from compiler.ast.nodes import (
     Expr,
     ForLoop,
     IfElse,
+    IndexAccessor,
     PostfixExpr,
     PostfixOp,
     VarAssign,
@@ -67,7 +70,9 @@ class Block:
 class LLVMCompiler:
     _HEADER = "; https://github.com/swaglang/swaglang to https://github.com/llvm/llvm-project compiler"
     _STRING_TYPE_NAME = "%Str"
-    _STRING_DECL = f"\n{_STRING_TYPE_NAME} = type {{ i64, ptr }}\n"
+    _STRING_DECL = f"\n{_STRING_TYPE_NAME} = type {{ i64, ptr }}"
+    _ARR_TYPE_NAME = "%Arr"
+    _ARR_DECL = f"\n{_ARR_TYPE_NAME} = type {{ i64, ptr }}\n"
 
     def __init__(self, ast: ASTNode, types: TypeTable, symbols: SymbolTable):
         self._ast = ast
@@ -78,7 +83,7 @@ class LLVMCompiler:
         self._nesting = 0
         self._ssa = 0
         self._unique_seq = 0
-        self._locals: set[str] = set()
+        self._locals: dict[str, str] = {}
 
     def compile(self) -> str:
         return self._codegen(self._ast)
@@ -147,6 +152,7 @@ class LLVMCompiler:
 
         self._global_declare(self._HEADER)
         self._global_declare(self._STRING_DECL)
+        self._global_declare(self._ARR_DECL)
         self._global_declare(self._printf_decl())
         self._global_declare("declare ptr @malloc(i64)")
         self._global_declare("declare void @llvm.memcpy.p0.p0.i64(ptr, ptr, i64, i1)\n")
@@ -188,7 +194,6 @@ class LLVMCompiler:
         decl: FuncDecl = function
         type = self._return_type(decl.return_type)
         reg = self._reg()
-        call_str = f"{reg} = call {type} @{fn_name}("
 
         args_str = ", ".join(
             f"{self._llvm_type(p.type_ann)} {self._expr(a)}"
@@ -208,12 +213,14 @@ class LLVMCompiler:
                 return "i1"
             case BaseType.STRING:
                 return self._STRING_TYPE_NAME
+            case ArrayType():
+                return self._ARR_TYPE_NAME
             case _:
                 raise NotImplementedError(f"LLVM type for {type} not implemented yet")
 
     def _func_decl(self, node: FuncDecl) -> str:
         self._reset_ssa()
-        self._locals = set()
+        self._locals = {}
         return_type = self._return_type(node.return_type)
         self._enter_scope()
 
@@ -270,8 +277,9 @@ class LLVMCompiler:
         self._alloca_store(node.name, t, self._expr(node.val))
 
     def _alloca_store(self, name: str, llvm_type: str, val: str):
-        self._locals.add(name)
-        slot = f"%{name}.addr"
+        n = self._unique()
+        slot = f"%{name}_{n}.addr"
+        self._locals[name] = slot
         self._block_top_level(f"{slot} = alloca {llvm_type}, align 8")
         self._block_top_level(f"store {llvm_type} {val}, ptr {slot}, align 8")
 
@@ -295,14 +303,14 @@ class LLVMCompiler:
                 return str(v)
             case StringLiteral(val=v):
                 return self._string_struct(v)
+            case ArrayLiteral(elements=vals):
+                return self._array_struct(vals)
             case VarRef():
+                if len(node.accessors) > 0:
+                    return self._accessor(node)
                 string_ptr = self._reg()
                 llvm_t = self._llvm_type(self._types.get(node))
-                ptr = (
-                    f"%{node.name}.addr"
-                    if node.name in self._locals
-                    else f"@{node.name}"
-                )
+                ptr = self._var_ptr(node.name)
                 self._block_top_level(
                     f"{string_ptr} = load {llvm_t}, ptr {ptr}, align 8"
                 )
@@ -316,6 +324,77 @@ class LLVMCompiler:
             case _:
                 print(f"implement expr: {type(node)}")
         return ""
+
+    def _var_ptr(self, name: str) -> str:
+        if name in self._locals:
+            return self._locals[name]
+        return f"@{name}"
+
+    def _index_accessor(
+        self, current_val: str, current_type, acc: IndexAccessor, uid: str
+    ):
+        llvm_t = self._llvm_type(current_type)
+        len_reg = f"%acc_len_{uid}"
+        data_reg = f"%acc_data_{uid}"
+        self._block_top_level(f"{len_reg}  = extractvalue {llvm_t} {current_val}, 0")
+        self._block_top_level(f"{data_reg} = extractvalue {llvm_t} {current_val}, 1")
+        idx_raw = self._expr(acc.index)
+        is_neg = f"%acc_isneg_{uid}"
+        adj = f"%acc_adj_{uid}"
+        idx = f"%acc_idx_{uid}"
+        self._block_top_level(f"{is_neg} = icmp slt i64 {idx_raw}, 0")
+        self._block_top_level(f"{adj} = add i64 {idx_raw}, {len_reg}")
+        self._block_top_level(f"{idx} = select i1 {is_neg}, i64 {adj}, i64 {idx_raw}")
+        match current_type:
+            case BaseType.STRING:
+                elem_ptr = f"%acc_elemptr_{uid}"
+                ch = f"%acc_ch_{uid}"
+                buf = f"%acc_buf_{uid}"
+                tmp = f"%acc_tmp_{uid}"
+                res = f"%acc_res_{uid}"
+                self._block_top_level(
+                    f"{elem_ptr} = getelementptr i8, ptr {data_reg}, i64 {idx}"
+                )
+                self._block_top_level(f"{ch} = load i8, ptr {elem_ptr}")
+                self._block_top_level(f"{buf} = call ptr @malloc(i64 1)")
+                self._block_top_level(f"store i8 {ch}, ptr {buf}")
+                self._block_top_level(f"{tmp} = insertvalue %Str undef, i64 1, 0")
+                self._block_top_level(f"{res} = insertvalue %Str {tmp}, ptr {buf}, 1")
+                return res, BaseType.STRING
+            case ArrayType(element=elem_t):
+                llvm_elem_t = self._llvm_type(elem_t)
+                elem_ptr = f"%acc_elemptr_{uid}"
+                elem = f"%acc_elem_{uid}"
+                self._block_top_level(
+                    f"{elem_ptr} = getelementptr {llvm_elem_t}, ptr {data_reg}, i64 {idx}"
+                )
+                self._block_top_level(
+                    f"{elem} = load {llvm_elem_t}, ptr {elem_ptr}, align 8"
+                )
+                return elem, elem_t
+        return current_val, current_type
+
+    def _accessor(self, node: VarRef):
+        if len(node.accessors) == 0:
+            return ""
+        n = self._unique()
+
+        base_type = node.accessors[0].type_ann
+        llvm_t = self._llvm_type(base_type)
+        ptr = self._var_ptr(node.name)
+        current_val = f"%acc_base_{n}"
+        current_type = base_type
+        self._block_top_level(f"{current_val} = load {llvm_t}, ptr {ptr}, align 8")
+
+        for i, acc in enumerate(node.accessors):
+            uid = f"{n}_{i}"
+            match acc:
+                case IndexAccessor():
+                    current_val, current_type = self._index_accessor(
+                        current_val, current_type, acc, uid
+                    )
+
+        return current_val
 
     def _string_struct(self, string: str) -> str:
         str_l = len(string)
@@ -333,6 +412,32 @@ class LLVMCompiler:
         populated_reg = f"%str_ass_{n}"
         self._block_top_level(
             f"{populated_reg} = insertvalue {self._STRING_TYPE_NAME} {sized_reg}, ptr {string_ptr}, 1"
+        )
+        return populated_reg
+
+    def _array_struct(self, vals: List[Expr]) -> str:
+        n = self._unique()
+        if len(vals) == 0:
+            llvm_t = "void"
+        else:
+            llvm_t = self._llvm_type(self._types.get(vals[0]))
+        mem_len = len(vals) * 8
+        buf = f"%arr_buf_{n}"
+        regs = [self._expr(val) for val in vals]
+        self._block_top_level(f"{buf} = call ptr @malloc(i64 {mem_len})")
+        for i, reg in enumerate(regs):
+            stored_reg = f"%arr_{n}_el_{i}"
+            self._block_top_level(
+                f"{stored_reg} = getelementptr {llvm_t}, ptr {buf}, i64 {i}"
+            )
+            self._block_top_level(f"store {llvm_t} {reg}, ptr {stored_reg}, align 8")
+        sized_reg = f"%arr_sized_{n}"
+        self._block_top_level(
+            f"{sized_reg} = insertvalue {self._ARR_TYPE_NAME} undef, i64 {len(vals)}, 0"
+        )
+        populated_reg = f"%arr_populated_{n}"
+        self._block_top_level(
+            f"{populated_reg} = insertvalue {self._ARR_TYPE_NAME} {sized_reg}, ptr {buf}, 1"
         )
         return populated_reg
 
@@ -501,6 +606,9 @@ class LLVMCompiler:
                 )
                 self._block_top_level(f"{res} = insertvalue %Str {tmp}, ptr {buf}, 1")
                 return res
+            case _:
+                print(f"string op {op} not implemented")
+                return ""
 
         return populated_reg
 
@@ -579,13 +687,13 @@ class LLVMCompiler:
             case PostfixOp.DEC:
                 op = "sub"
 
-        ptr = f"{postfix.operand.name}.addr"
+        ptr = self._var_ptr(postfix.operand.name)
         reg_old = f"{ptr}.old"
         reg_new = f"{ptr}.new"
         llvm_t = self._llvm_type(self._types.get(postfix.operand))
-        self._block_top_level(f"%{reg_old} = load {llvm_t}, ptr %{ptr}, align 8")
-        self._block_top_level(f"%{reg_new} = {op} {llvm_t} %{reg_old}, 1")
-        self._block_top_level(f"store {llvm_t} %{reg_new}, ptr %{ptr}")
+        self._block_top_level(f"{reg_old} = load {llvm_t}, ptr {ptr}, align 8")
+        self._block_top_level(f"{reg_new} = {op} {llvm_t} {reg_old}, 1")
+        self._block_top_level(f"store {llvm_t} {reg_new}, ptr {ptr}, align 8")
 
     def _for(self, loop: ForLoop):
         n = self._unique()
@@ -646,28 +754,21 @@ class LLVMCompiler:
         val = self._expr(assign.val)
         var_type = self._types.get(assign.var)
         llvm_t = self._llvm_type(var_type)
+        ptr = self._var_ptr(assign.var.name)
 
         if assign.op == AssignOp.ASSIGN:
-            self._block_top_level(
-                f"store {llvm_t} {val}, ptr %{assign.var.name}.addr, align 8"
-            )
+            self._block_top_level(f"store {llvm_t} {val}, ptr {ptr}, align 8")
             return
 
         n = self._unique()
         old = f"%{assign.var.name}.old{n}"
-        self._block_top_level(
-            f"{old} = load {llvm_t}, ptr %{assign.var.name}.addr, align 8"
-        )
+        self._block_top_level(f"{old} = load {llvm_t}, ptr {ptr}, align 8")
 
         if var_type == BaseType.STRING and assign.op == AssignOp.ADD_ASSIGN:
             new = self._binary_op_string(BinaryOp.ADD, old, val)
-            self._block_top_level(
-                f"store {llvm_t} {new}, ptr %{assign.var.name}.addr, align 8"
-            )
+            self._block_top_level(f"store {llvm_t} {new}, ptr {ptr}, align 8")
             return
 
         binary_op = self._ASSIGN_TO_BINARY[assign.op]
         new = self._binary_op_int(binary_op, old, val)
-        self._block_top_level(
-            f"store {llvm_t} {new}, ptr %{assign.var.name}.addr, align 8"
-        )
+        self._block_top_level(f"store {llvm_t} {new}, ptr {ptr}, align 8")
