@@ -338,13 +338,7 @@ class LLVMCompiler:
         data_reg = f"%acc_data_{uid}"
         self._block_top_level(f"{len_reg}  = extractvalue {llvm_t} {current_val}, 0")
         self._block_top_level(f"{data_reg} = extractvalue {llvm_t} {current_val}, 1")
-        idx_raw = self._expr(acc.index)
-        is_neg = f"%acc_isneg_{uid}"
-        adj = f"%acc_adj_{uid}"
-        idx = f"%acc_idx_{uid}"
-        self._block_top_level(f"{is_neg} = icmp slt i64 {idx_raw}, 0")
-        self._block_top_level(f"{adj} = add i64 {idx_raw}, {len_reg}")
-        self._block_top_level(f"{idx} = select i1 {is_neg}, i64 {adj}, i64 {idx_raw}")
+        idx = self._compute_index(acc.index, len_reg, uid)
         match current_type:
             case BaseType.STRING:
                 elem_ptr = f"%acc_elemptr_{uid}"
@@ -400,18 +394,16 @@ class LLVMCompiler:
         str_l = len(string)
         n = self._unique()
         self._global_declare(f'@str{n} = private constant [{str_l} x i8] c"{string}"')
-        string_ptr = self._reg()
-        ptr_aq = (
-            f"{string_ptr} = getelementptr [{str_l} x i8], ptr @str{n}, i32 0, i32 0"
+        buf = f"%str_buf_{n}"
+        self._block_top_level(f"{buf} = call ptr @malloc(i64 {str_l})")
+        self._block_top_level(
+            f"call void @llvm.memcpy.p0.p0.i64(ptr {buf}, ptr @str{n}, i64 {str_l}, i1 false)"
         )
-        self._block_top_level(ptr_aq)
         sized_reg = f"%len_ass_{n}"
-        self._block_top_level(
-            f"{sized_reg} = insertvalue {self._STRING_TYPE_NAME} undef, i64 {str_l}, 0"
-        )
         populated_reg = f"%str_ass_{n}"
+        self._block_top_level(f"{sized_reg} = insertvalue %Str undef, i64 {str_l}, 0")
         self._block_top_level(
-            f"{populated_reg} = insertvalue {self._STRING_TYPE_NAME} {sized_reg}, ptr {string_ptr}, 1"
+            f"{populated_reg} = insertvalue %Str {sized_reg}, ptr {buf}, 1"
         )
         return populated_reg
 
@@ -752,6 +744,10 @@ class LLVMCompiler:
 
     def _var_assign(self, assign: VarAssign):
         val = self._expr(assign.val)
+
+        if assign.var.accessors:
+            self._index_assign(assign.var, val)
+            return
         var_type = self._types.get(assign.var)
         llvm_t = self._llvm_type(var_type)
         ptr = self._var_ptr(assign.var.name)
@@ -772,3 +768,53 @@ class LLVMCompiler:
         binary_op = self._ASSIGN_TO_BINARY[assign.op]
         new = self._binary_op_int(binary_op, old, val)
         self._block_top_level(f"store {llvm_t} {new}, ptr {ptr}, align 8")
+
+    def _index_assign(self, var: VarRef, val: str):
+        base_type = var.accessors[0].type_ann
+        n = self._unique()
+
+        current_val  = f"%idx_ass_base_{n}"
+        current_type = base_type
+        self._block_top_level(
+            f"{current_val} = load {self._llvm_type(base_type)}, ptr {self._var_ptr(var.name)}, align 8"
+        )
+
+        for i, acc in enumerate(var.accessors[:-1]):
+            uid = f"{n}_{i}"
+            match acc:
+                case IndexAccessor():
+                    current_val, current_type = self._index_accessor(current_val, current_type, acc, uid)
+
+        last = var.accessors[-1]
+        uid  = f"{n}_{len(var.accessors) - 1}"
+        llvm_t   = self._llvm_type(current_type)
+        len_reg  = f"%idx_ass_len_{uid}"
+        data_reg = f"%idx_ass_data_{uid}"
+        self._block_top_level(f"{len_reg}  = extractvalue {llvm_t} {current_val}, 0")
+        self._block_top_level(f"{data_reg} = extractvalue {llvm_t} {current_val}, 1")
+        idx = self._compute_index(last.index, len_reg, uid)
+
+        match current_type:
+            case ArrayType(element=elem_t):
+                llvm_elem_t = self._llvm_type(elem_t)
+                elem_ptr = f"%idx_ass_ptr_{uid}"
+                self._block_top_level(f"{elem_ptr} = getelementptr {llvm_elem_t}, ptr {data_reg}, i64 {idx}")
+                self._block_top_level(f"store {llvm_elem_t} {val}, ptr {elem_ptr}, align 8")
+            case BaseType.STRING:
+                elem_ptr = f"%idx_ass_ptr_{uid}"
+                ch_data  = f"%idx_ass_ch_data_{uid}"
+                ch_byte  = f"%idx_ass_ch_byte_{uid}"
+                self._block_top_level(f"{elem_ptr} = getelementptr i8, ptr {data_reg}, i64 {idx}")
+                self._block_top_level(f"{ch_data} = extractvalue %Str {val}, 1")
+                self._block_top_level(f"{ch_byte} = load i8, ptr {ch_data}")
+                self._block_top_level(f"store i8 {ch_byte}, ptr {elem_ptr}")
+
+    def _compute_index(self, idx_expr, len_reg, uid):
+        idx_raw = self._expr(idx_expr)
+        is_neg = f"%acc_isneg_{uid}"
+        adj = f"%acc_adj_{uid}"
+        idx = f"%acc_idx_{uid}"
+        self._block_top_level(f"{is_neg} = icmp slt i64 {idx_raw}, 0")
+        self._block_top_level(f"{adj} = add i64 {idx_raw}, {len_reg}")
+        self._block_top_level(f"{idx} = select i1 {is_neg}, i64 {adj}, i64 {idx_raw}")
+        return idx
