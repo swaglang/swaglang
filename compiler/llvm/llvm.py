@@ -615,14 +615,14 @@ class LLVMCompiler:
         if_label = f"if_{self._unique()}"
 
         first = elif_labels[0] if elif_labels else else_label
-        cond = self._expr(node.condition)
+        cond = self._to_bool(node.condition)
         self._block_top_level(f"br i1 {cond}, label %{if_label}, label %{first}")
 
         # elif checks
         for i, (label, clause) in enumerate(zip(elif_labels, node.elif_clauses)):
             next_label = elif_labels[i + 1] if i + 1 < len(elif_labels) else else_label
             self._label(label)
-            cond = self._expr(clause.condition)
+            cond = self._to_bool(clause.condition)
             self._block_top_level(
                 f"br i1 {cond}, label %{label}_body, label %{next_label}"
             )
@@ -653,7 +653,7 @@ class LLVMCompiler:
         self._set_end_label(end_label)
 
         self._label(condition_label)
-        cond = self._expr(node.condition)
+        cond = self._to_bool(node.condition)
         self._block_top_level(f"br i1 {cond}, label %{body_label}, label %{end_label}")
 
         self._label(body_label)
@@ -724,7 +724,7 @@ class LLVMCompiler:
 
         if loop.condition:
             self._label(cond_label)
-            cond = self._expr(loop.condition)
+            cond = self._to_bool(loop.condition)
             self._block_top_level(
                 f"br i1 {cond}, label %{body_label}, label %{end_label}"
             )
@@ -827,8 +827,9 @@ class LLVMCompiler:
         operand = self._expr(node.operand)
         match node.op:
             case UnaryOp.NOT:
+                bool_val = self._coerce_to_bool(operand, self._types.get(node.operand))
                 reg = self._reg()
-                self._block_top_level(f"{reg} = xor i1 {operand}, 1")
+                self._block_top_level(f"{reg} = xor i1 {bool_val}, 1")
                 return reg
             case UnaryOp.NEG:
                 reg = self._reg()
@@ -838,3 +839,35 @@ class LLVMCompiler:
                     case BaseType.FLOAT:
                         self._block_top_level(f"{reg} = fneg double {operand}")
                 return reg
+
+    def _coerce_to_bool(self, val: str, t) -> str:
+        match t:
+            case BaseType.BOOL:
+                return val
+            case BaseType.INT:
+                reg = self._reg()
+                self._block_top_level(f"{reg} = icmp ne i64 {val}, 0")
+                return reg
+            case BaseType.FLOAT:
+                reg = self._reg()
+                self._block_top_level(f"{reg} = fcmp une double {val}, 0.0")
+                return reg
+            case BaseType.STRING:
+                n = self._unique()
+                len_reg = f"%bool_len_{n}"
+                reg = self._reg()
+                self._block_top_level(f"{len_reg} = extractvalue %Str {val}, 0")
+                self._block_top_level(f"{reg} = icmp ne i64 {len_reg}, 0")
+                return reg
+            case ArrayType():
+                n = self._unique()
+                len_reg = f"%bool_len_{n}"
+                reg = self._reg()
+                self._block_top_level(f"{len_reg} = extractvalue %Arr {val}, 0")
+                self._block_top_level(f"{reg} = icmp ne i64 {len_reg}, 0")
+                return reg
+            case _:
+                return val
+
+    def _to_bool(self, node: Expr) -> str:
+        return self._coerce_to_bool(self._expr(node), self._types.get(node))

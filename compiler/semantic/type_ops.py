@@ -50,10 +50,15 @@ def binary_result_type(op: BinaryOp, left: Type, right: Type) -> Optional[Type]:
         case _:
             return None
 
+def is_truthy(t: Type) -> bool:
+    """Types usable in boolean context (if/while/! operator)."""
+    return t in (BaseType.BOOL, BaseType.INT, BaseType.FLOAT, BaseType.STRING) \
+        or isinstance(t, (ArrayType, SetType))
+
 def unary_result_type(op: UnaryOp, operand: Type) -> Optional[Type]:
     match op:
         case UnaryOp.NOT:
-            return BaseType.BOOL if operand == BaseType.BOOL else None
+            return BaseType.BOOL if is_truthy(operand) else None
         case UnaryOp.NEG:
             return operand if is_numeric(operand) else None
         case _:

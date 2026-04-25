@@ -17,7 +17,7 @@ from compiler.semantic.builtins import builtin_symbols
 from compiler.semantic.symbols import Symbol, SymbolKind, SymbolTable
 from compiler.semantic.type_table import TypeTable
 from compiler.semantic.type_ops import (
-    binary_result_type, fmt_type, is_assignable, is_numeric, unary_result_type,
+    binary_result_type, fmt_type, is_assignable, is_numeric, is_truthy, unary_result_type,
 )
 
 
@@ -422,8 +422,8 @@ class SemanticAnalyzer:
 
     def _check_while_loop(self, node: WhileLoop) -> None:
         cond_type = self._infer_expr(node.condition)
-        if cond_type != BaseType.BOOL and cond_type != BaseType.ERROR:
-            self._error("while condition must be bool", "TypeError")
+        if not is_truthy(cond_type) and cond_type != BaseType.ERROR:
+            self._error("while condition must be bool or truthy type", "TypeError")
         self._loop_depth += 1
         self.symbols.enter_scope()
         self._check_code_block(node.body)
@@ -437,8 +437,8 @@ class SemanticAnalyzer:
         self.symbols.exit_scope()
         self._loop_depth -= 1
         cond_type = self._infer_expr(node.condition)
-        if cond_type != BaseType.BOOL and cond_type != BaseType.ERROR:
-            self._error("do-while condition must be bool", "TypeError")
+        if not is_truthy(cond_type) and cond_type != BaseType.ERROR:
+            self._error("do-while condition must be bool or truthy type", "TypeError")
 
     def _check_for_loop(self, node: ForLoop) -> None:
         self.symbols.enter_scope()
@@ -446,8 +446,8 @@ class SemanticAnalyzer:
             self._check_no_acs_mode_var_decl(node.init)
         if node.condition is not None:
             cond_type = self._infer_expr(node.condition)
-            if cond_type != BaseType.BOOL and cond_type != BaseType.ERROR:
-                self._error("for condition must be bool", "TypeError")
+            if not is_truthy(cond_type) and cond_type != BaseType.ERROR:
+                self._error("for condition must be bool or truthy type", "TypeError")
         if node.update is not None:
             from compiler.ast.nodes import VarAssign
             if isinstance(node.update, VarAssign):
@@ -489,8 +489,8 @@ class SemanticAnalyzer:
 
     def _check_if_else(self, node: IfElse) -> None:
         cond_type = self._infer_expr(node.condition)
-        if cond_type != BaseType.BOOL and cond_type != BaseType.ERROR:
-            self._error("if condition must be bool", "TypeError")
+        if not is_truthy(cond_type) and cond_type != BaseType.ERROR:
+            self._error("if condition must be bool or truthy type", "TypeError")
 
         self.symbols.enter_scope()
         self._check_code_block(node.if_body)
@@ -498,8 +498,8 @@ class SemanticAnalyzer:
 
         for elif_clause in node.elif_clauses:
             elif_cond = self._infer_expr(elif_clause.condition)
-            if elif_cond != BaseType.BOOL and elif_cond != BaseType.ERROR:
-                self._error("elif condition must be bool", "TypeError")
+            if not is_truthy(elif_cond) and elif_cond != BaseType.ERROR:
+                self._error("elif condition must be bool or truthy type", "TypeError")
             self.symbols.enter_scope()
             self._check_code_block(elif_clause.body)
             self.symbols.exit_scope()
@@ -590,8 +590,8 @@ class SemanticAnalyzer:
 
     def _infer_ternary(self, cond, t_expr, f_expr) -> Type:
         cond_type = self._infer_expr(cond)
-        if cond_type != BaseType.BOOL and cond_type != BaseType.ERROR:
-            self._error("ternary condition must be bool", "TypeError")
+        if not is_truthy(cond_type) and cond_type != BaseType.ERROR:
+            self._error("ternary condition must be bool or truthy type", "TypeError")
         tt = self._infer_expr(t_expr)
         ft = self._infer_expr(f_expr)
         if tt != ft and tt != BaseType.ERROR and ft != BaseType.ERROR:
