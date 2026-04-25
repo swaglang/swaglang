@@ -652,6 +652,7 @@ class LLVMCompiler:
         self._set_condition_label(condition_label)
         self._set_end_label(end_label)
 
+        self._block_top_level(f"br label %{condition_label}")
         self._label(condition_label)
         cond = self._to_bool(node.condition)
         self._block_top_level(f"br i1 {cond}, label %{body_label}, label %{end_label}")
