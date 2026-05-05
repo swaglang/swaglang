@@ -7,6 +7,7 @@ from compiler.ast.nodes import (
     BinaryExpr,
     BinaryOp,
     Break,
+    CastExpr,
     Continue,
     Expr,
     ForLoop,
@@ -157,6 +158,7 @@ class LLVMCompiler:
         self._global_declare(self._ARR_DECL)
         self._global_declare(self._printf_decl())
         self._global_declare("declare ptr @malloc(i64)")
+        self._global_declare("declare double @llvm.pow.f64(double, double)")
         self._global_declare("declare void @llvm.memcpy.p0.p0.i64(ptr, ptr, i64, i1)\n")
 
         for stmt in prog.stmts:
@@ -325,9 +327,22 @@ class LLVMCompiler:
                 self._postfix_op(node)
             case UnaryExpr():
                 return self._unary_expr(node)
+            case CastExpr():
+                return self._cast(node)
             case _:
                 print(f"implement expr: {type(node)}")
         return ""
+    
+    def _cast(self, node: CastExpr):
+        initial_type = self._types.get(node.expr)
+        cast_type = node.to
+        from_reg = self._expr(node.expr)
+        match initial_type:
+            case BaseType.INT:
+                if cast_type == BaseType.FLOAT:
+                    reg = self._reg()
+                    self._block_top_level(f"{reg} = sitofp i64 {from_reg} to double")
+        return reg
 
     def _var_ptr(self, name: str) -> str:
         if name in self._locals:
@@ -459,6 +474,8 @@ class LLVMCompiler:
                 return self._binary_op_bool(op, left_val, right_val)
             case BaseType.STRING:
                 return self._binary_op_string(op, left_val, right_val)
+            case BaseType.FLOAT:
+                return self._binary_op_float(op, left_val, right_val)
             case _:
                 print(f"implement binary op {op}")
                 return ""
@@ -607,6 +624,15 @@ class LLVMCompiler:
                 return ""
 
         return populated_reg
+    
+    def _binary_op_float(self, op: BinaryOp, left: str, right: str):
+        reg = self._reg()
+
+        match op:
+            case BinaryOp.EXP:
+                self._block_top_level(f"{reg} = call double @llvm.pow.f64(double {left}, double {right})")
+        return reg
+
 
     def _ifelse(self, node: IfElse):
         end_label = f"end_{self._unique()}"

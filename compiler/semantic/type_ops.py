@@ -31,8 +31,10 @@ def binary_result_type(op: BinaryOp, left: Type, right: Type) -> Optional[Type]:
             if left == BaseType.STRING and right == BaseType.INT:
                 return BaseType.STRING # "abc" * 3  →  "abcabcabc"
             return common_type(left, right) if is_numeric(left) and is_numeric(right) else None
-        case BinaryOp.SUB | BinaryOp.DIV | BinaryOp.MOD | BinaryOp.EXP:
+        case BinaryOp.SUB | BinaryOp.DIV | BinaryOp.MOD:
             return common_type(left, right) if is_numeric(left) and is_numeric(right) else None
+        case BinaryOp.EXP:
+            return BaseType.FLOAT if is_numeric(left) and is_numeric(right) else None
         case BinaryOp.EQ | BinaryOp.NEQ:
             if left == right:
                 return BaseType.BOOL
