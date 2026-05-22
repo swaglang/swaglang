@@ -386,11 +386,7 @@ class ASTBuilder(SwagLangParserVisitor):
             forin = ctx.forin()
             node: ForLoop | ForInLoop = ForInLoop(
                 var=forin.IDENT().getText(),
-                iterable=(
-                    self.visit(forin.func_call())
-                    if forin.func_call()
-                    else self.visit(forin.var_ref())
-                ),
+                iterable=self.visit(forin.expr()),
                 body=self.visit(ctx.loop_body().code_block()),
             )
             self._set_pos(node, ctx)

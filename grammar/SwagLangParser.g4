@@ -172,7 +172,7 @@ for_loop
     ;
 
 forin
-    : FOR IDENT IN (func_call | var_ref )
+    : FOR IDENT IN expr
     ;
 
 conditional

@@ -19,13 +19,19 @@ def _any(_: Optional[Type]) -> bool:
     return True
 
 
+def _int(t: Optional[Type]) -> bool:
+    return t == BaseType.INT
+
+
 # Builtin signatures: name -> ([arg_predicate, ...], return_type | None)
-# arg_predicate: callable(Type) -> bool
+# arg_predicate: callable(Type) -> bool, one entry per accepted positional arg
 # return_type None means void
 BUILTIN_SIGS: dict[str, tuple[list[Callable], Optional[Type]]] = {
     "println": ([_any], None),
     "print": ([_any], None),
     "len": ([_sizeable], BaseType.INT),
+    # range(n), range(start, end), range(start, end, step)
+    "range": ([_int, _int, _int], ArrayType(BaseType.INT)),
 }
 
 _TYPED: dict[str, FuncDecl] = {}

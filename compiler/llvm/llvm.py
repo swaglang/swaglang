@@ -10,6 +10,7 @@ from compiler.ast.nodes import (
     CastExpr,
     Continue,
     Expr,
+    ForInLoop,
     ForLoop,
     IfElse,
     IndexAccessor,
@@ -271,6 +272,8 @@ class LLVMCompiler:
                 self._postfix_op(node)
             case ForLoop():
                 self._for(node)
+            case ForInLoop():
+                self._for_in(node)
             case VarAssign():
                 self._var_assign(node)
             case _:
@@ -332,7 +335,7 @@ class LLVMCompiler:
             case _:
                 print(f"implement expr: {type(node)}")
         return ""
-    
+
     def _cast(self, node: CastExpr):
         initial_type = self._types.get(node.expr)
         cast_type = node.to
@@ -624,15 +627,16 @@ class LLVMCompiler:
                 return ""
 
         return populated_reg
-    
+
     def _binary_op_float(self, op: BinaryOp, left: str, right: str):
         reg = self._reg()
 
         match op:
             case BinaryOp.EXP:
-                self._block_top_level(f"{reg} = call double @llvm.pow.f64(double {left}, double {right})")
+                self._block_top_level(
+                    f"{reg} = call double @llvm.pow.f64(double {left}, double {right})"
+                )
         return reg
-
 
     def _ifelse(self, node: IfElse):
         end_label = f"end_{self._unique()}"
@@ -765,6 +769,93 @@ class LLVMCompiler:
             self._block_top_level(f"br label %{body_label}")
         self._label(end_label)
 
+    def _for_in(self, loop: ForInLoop):
+        iterable_val = self._expr(loop.iterable)
+        iterable_type = self._types.get(loop.iterable)
+
+        n = self._unique()
+        len_reg = f"%forin_len_{n}"
+        data_reg = f"%forin_data_{n}"
+        i_slot = f"%forin_i_{n}.addr"
+        inc_lbl = f"forin_inc_{n}"
+        cond_lbl = f"forin_cond_{n}"
+        body_lbl = f"forin_body_{n}"
+        end_lbl = f"forin_end_{n}"
+
+        is_string = iterable_type == BaseType.STRING
+        struct_t = self._STRING_TYPE_NAME if is_string else self._ARR_TYPE_NAME
+
+        match iterable_type:
+            case ArrayType(element=elem_t):
+                llvm_elem_t = self._llvm_type(elem_t)
+            case _ if is_string:
+                llvm_elem_t = self._STRING_TYPE_NAME
+            case _:
+                print(f"for-in: unsupported iterable type {iterable_type}")
+                return
+
+        self._block_top_level(f"{len_reg}  = extractvalue {struct_t} {iterable_val}, 0")
+        self._block_top_level(f"{data_reg} = extractvalue {struct_t} {iterable_val}, 1")
+
+        self._block_top_level(f"{i_slot} = alloca i64, align 8")
+        self._block_top_level(f"store i64 0, ptr {i_slot}, align 8")
+
+        unique_var = self._unique()
+        var_slot = f"%{loop.var}_{unique_var}.addr"
+        self._locals[loop.var] = var_slot
+        self._block_top_level(f"{var_slot} = alloca {llvm_elem_t}, align 8")
+
+        self._set_condition_label(inc_lbl)
+        self._set_end_label(end_lbl)
+        self._block_top_level(f"br label %{cond_lbl}")
+
+        self._label(cond_lbl)
+        i_cur = f"%forin_icur_{n}"
+        cmp = f"%forin_cmp_{n}"
+        self._block_top_level(f"{i_cur} = load i64, ptr {i_slot}, align 8")
+        self._block_top_level(f"{cmp} = icmp slt i64 {i_cur}, {len_reg}")
+        self._block_top_level(f"br i1 {cmp}, label %{body_lbl}, label %{end_lbl}")
+
+        self._label(body_lbl)
+        if is_string:
+            # build a single-char %Str fat pointer (same as _index_accessor for STRING)
+            ch_ptr = f"%forin_chptr_{n}"
+            ch = f"%forin_ch_{n}"
+            buf = f"%forin_buf_{n}"
+            tmp = f"%forin_tmp_{n}"
+            elem_val = f"%forin_eval_{n}"
+            self._block_top_level(
+                f"{ch_ptr}  = getelementptr i8, ptr {data_reg}, i64 {i_cur}"
+            )
+            self._block_top_level(f"{ch}      = load i8, ptr {ch_ptr}")
+            self._block_top_level(f"{buf}     = call ptr @malloc(i64 1)")
+            self._block_top_level(f"store i8 {ch}, ptr {buf}")
+            self._block_top_level(f"{tmp}     = insertvalue %Str undef, i64 1, 0")
+            self._block_top_level(f"{elem_val} = insertvalue %Str {tmp}, ptr {buf}, 1")
+        else:
+            elem_ptr = f"%forin_eptr_{n}"
+            elem_val = f"%forin_eval_{n}"
+            self._block_top_level(
+                f"{elem_ptr} = getelementptr {llvm_elem_t}, ptr {data_reg}, i64 {i_cur}"
+            )
+            self._block_top_level(
+                f"{elem_val} = load {llvm_elem_t}, ptr {elem_ptr}, align 8"
+            )
+
+        self._block_top_level(
+            f"store {llvm_elem_t} {elem_val}, ptr {var_slot}, align 8"
+        )
+        self._code_block(loop.body)
+        self._block_top_level(f"br label %{inc_lbl}")
+
+        self._label(inc_lbl)
+        i_next = f"%forin_inext_{n}"
+        self._block_top_level(f"{i_next} = add i64 {i_cur}, 1")
+        self._block_top_level(f"store i64 {i_next}, ptr {i_slot}, align 8")
+        self._block_top_level(f"br label %{cond_lbl}")
+
+        self._label(end_lbl)
+
     _ASSIGN_TO_BINARY = {
         AssignOp.ADD_ASSIGN: BinaryOp.ADD,
         AssignOp.SUB_ASSIGN: BinaryOp.SUB,
@@ -804,7 +895,7 @@ class LLVMCompiler:
         base_type = var.accessors[0].type_ann
         n = self._unique()
 
-        current_val  = f"%idx_ass_base_{n}"
+        current_val = f"%idx_ass_base_{n}"
         current_type = base_type
         self._block_top_level(
             f"{current_val} = load {self._llvm_type(base_type)}, ptr {self._var_ptr(var.name)}, align 8"
@@ -814,12 +905,14 @@ class LLVMCompiler:
             uid = f"{n}_{i}"
             match acc:
                 case IndexAccessor():
-                    current_val, current_type = self._index_accessor(current_val, current_type, acc, uid)
+                    current_val, current_type = self._index_accessor(
+                        current_val, current_type, acc, uid
+                    )
 
         last = var.accessors[-1]
-        uid  = f"{n}_{len(var.accessors) - 1}"
-        llvm_t   = self._llvm_type(current_type)
-        len_reg  = f"%idx_ass_len_{uid}"
+        uid = f"{n}_{len(var.accessors) - 1}"
+        llvm_t = self._llvm_type(current_type)
+        len_reg = f"%idx_ass_len_{uid}"
         data_reg = f"%idx_ass_data_{uid}"
         self._block_top_level(f"{len_reg}  = extractvalue {llvm_t} {current_val}, 0")
         self._block_top_level(f"{data_reg} = extractvalue {llvm_t} {current_val}, 1")
@@ -829,13 +922,19 @@ class LLVMCompiler:
             case ArrayType(element=elem_t):
                 llvm_elem_t = self._llvm_type(elem_t)
                 elem_ptr = f"%idx_ass_ptr_{uid}"
-                self._block_top_level(f"{elem_ptr} = getelementptr {llvm_elem_t}, ptr {data_reg}, i64 {idx}")
-                self._block_top_level(f"store {llvm_elem_t} {val}, ptr {elem_ptr}, align 8")
+                self._block_top_level(
+                    f"{elem_ptr} = getelementptr {llvm_elem_t}, ptr {data_reg}, i64 {idx}"
+                )
+                self._block_top_level(
+                    f"store {llvm_elem_t} {val}, ptr {elem_ptr}, align 8"
+                )
             case BaseType.STRING:
                 elem_ptr = f"%idx_ass_ptr_{uid}"
-                ch_data  = f"%idx_ass_ch_data_{uid}"
-                ch_byte  = f"%idx_ass_ch_byte_{uid}"
-                self._block_top_level(f"{elem_ptr} = getelementptr i8, ptr {data_reg}, i64 {idx}")
+                ch_data = f"%idx_ass_ch_data_{uid}"
+                ch_byte = f"%idx_ass_ch_byte_{uid}"
+                self._block_top_level(
+                    f"{elem_ptr} = getelementptr i8, ptr {data_reg}, i64 {idx}"
+                )
                 self._block_top_level(f"{ch_data} = extractvalue %Str {val}, 1")
                 self._block_top_level(f"{ch_byte} = load i8, ptr {ch_data}")
                 self._block_top_level(f"store i8 {ch_byte}, ptr {elem_ptr}")

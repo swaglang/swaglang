@@ -470,8 +470,11 @@ class SemanticAnalyzer:
                 elem_type = e
             case MapType(key=k):
                 elem_type = k
+            case _ if iterable_type == BaseType.STRING:
+                elem_type = BaseType.STRING  # each char yielded as single-char string
             case _:
-                elem_type = BaseType.ERROR  # range() or unknown
+                self._error(f"cannot iterate over '{fmt_type(iterable_type)}'", "TypeError")
+                elem_type = BaseType.ERROR
 
         self._loop_depth += 1
         self.symbols.enter_scope()

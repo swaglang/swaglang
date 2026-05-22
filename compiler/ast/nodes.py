@@ -292,7 +292,7 @@ class ForLoop(Loop):
 class ForInLoop(Loop):
     """for-in loop statement"""
     var: str
-    iterable: FuncCall | VarRef
+    iterable: Expr
     body: CodeBlock
 
 class Conditional(PureFuncStmt):
