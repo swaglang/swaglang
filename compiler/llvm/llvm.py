@@ -2,6 +2,7 @@ import platform
 from typing import List
 
 from compiler.ast.nodes import (
+    ArrayAlloc,
     ArrayLiteral,
     ArrayType,
     AssignOp,
@@ -95,7 +96,6 @@ class LLVMCompiler:
         self._codegen(self._ast)
         return "\n".join(self._globals) + "\n" + "\n".join(self._functions)
 
-
     def _enter_scope(self):
         self._nesting += 1
         self._blocks.append(Block())
@@ -171,7 +171,9 @@ class LLVMCompiler:
             self._global_declare("declare ptr @__acrt_iob_func(i32)")
         else:
             self._global_declare("@stdin = external global ptr")
-        self._global_declare('@_input_buf = private global [4096 x i8] zeroinitializer\n')
+        self._global_declare(
+            "@_input_buf = private global [4096 x i8] zeroinitializer\n"
+        )
 
         for stmt in prog.stmts:
             result = self._codegen(stmt)
@@ -291,7 +293,8 @@ class LLVMCompiler:
                 print(f"implement func_stmt{type(node)} l{node.line} c{node.col}")
 
     def _var_decl(self, node: VarDecl):
-        t = self._llvm_type(node.type_ann)
+        ann = node.type_ann if node.type_ann is not None else self._types.get(node.val)
+        t = self._llvm_type(ann)
         self._alloca_store(node.name, t, self._expr(node.val))
 
     def _alloca_store(self, name: str, llvm_type: str, val: str):
@@ -323,6 +326,8 @@ class LLVMCompiler:
                 return self._string_struct(v)
             case ArrayLiteral(elements=vals):
                 return self._array_struct(vals)
+            case ArrayAlloc(element_type=et, size=sz):
+                return self._array_alloc(et, sz)
             case VarRef():
                 if len(node.accessors) > 0:
                     return self._accessor(node)
@@ -463,6 +468,23 @@ class LLVMCompiler:
         populated_reg = f"%arr_populated_{n}"
         self._block_top_level(
             f"{populated_reg} = insertvalue {self._ARR_TYPE_NAME} {sized_reg}, ptr {buf}, 1"
+        )
+        return populated_reg
+
+    def _array_alloc(self, element_type, size_expr: Expr) -> str:
+        n = self._unique()
+        size_reg = self._expr(size_expr)
+        bytes_reg = f"%arr_alloc_bytes_{n}"
+        buf_reg = f"%arr_alloc_buf_{n}"
+        sized_reg = f"%arr_alloc_sized_{n}"
+        populated_reg = f"%arr_alloc_{n}"
+        self._block_top_level(f"{bytes_reg} = mul i64 {size_reg}, 8")
+        self._block_top_level(f"{buf_reg} = call ptr @malloc(i64 {bytes_reg})")
+        self._block_top_level(
+            f"{sized_reg} = insertvalue {self._ARR_TYPE_NAME} undef, i64 {size_reg}, 0"
+        )
+        self._block_top_level(
+            f"{populated_reg} = insertvalue {self._ARR_TYPE_NAME} {sized_reg}, ptr {buf_reg}, 1"
         )
         return populated_reg
 

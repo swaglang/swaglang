@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Optional
 
 from compiler.ast.nodes import (
-    AccessMod, ArrayLiteral, ArrayType, BaseType, BinaryExpr, BoolLiteral,
+    AccessMod, ArrayAlloc, ArrayLiteral, ArrayType, BaseType, BinaryExpr, BoolLiteral,
     Break, CodeBlock, Continue, Defer, DoWhileLoop, Expr,
     FieldAccessor, FloatLiteral, ForInLoop, ForLoop, FuncCall, FuncDecl,
     GlobalVarDecl, IfElse, IndexAccessor, InterfaceDecl, InterfaceField,
@@ -545,6 +545,11 @@ class SemanticAnalyzer:
                 return self._infer_ternary(cond, t_expr, f_expr)
             case ArrayLiteral(elements=elems):
                 return self._infer_array_literal(elems)
+            case ArrayAlloc(element_type=et, size=sz):
+                sz_t = self._infer_expr(sz)
+                if sz_t != BaseType.INT:
+                    self._error("array allocation size must be int", "TypeError")
+                return ArrayType(et)
             case SetLiteral(elements=elems):
                 return self._infer_set_literal(elems)
             case MapLiteral(fields=fields):

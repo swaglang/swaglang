@@ -109,6 +109,11 @@ class SwagLangParserVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SwagLangParser#array_alloc.
+    def visitArray_alloc(self, ctx:SwagLangParser.Array_allocContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SwagLangParser#map.
     def visitMap(self, ctx:SwagLangParser.MapContext):
         return self.visitChildren(ctx)

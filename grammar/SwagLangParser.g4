@@ -98,6 +98,7 @@ data
     | BOOL
     | NULL
     | array
+    | array_alloc
     | map
     | set
     | struct
@@ -105,6 +106,10 @@ data
 
 array
     : L_BRACKET NWLN* (expr (COMMA NWLN* expr)* COMMA?)? NWLN* R_BRACKET
+    ;
+
+array_alloc
+    : TYPE L_BRACKET expr R_BRACKET
     ;
 
 map

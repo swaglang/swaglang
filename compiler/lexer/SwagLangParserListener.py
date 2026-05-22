@@ -188,6 +188,15 @@ class SwagLangParserListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by SwagLangParser#array_alloc.
+    def enterArray_alloc(self, ctx:SwagLangParser.Array_allocContext):
+        pass
+
+    # Exit a parse tree produced by SwagLangParser#array_alloc.
+    def exitArray_alloc(self, ctx:SwagLangParser.Array_allocContext):
+        pass
+
+
     # Enter a parse tree produced by SwagLangParser#map.
     def enterMap(self, ctx:SwagLangParser.MapContext):
         pass

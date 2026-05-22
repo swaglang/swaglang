@@ -152,6 +152,12 @@ class ArrayLiteral(Data):
     elements: List[Expr]
 
 @dataclass
+class ArrayAlloc(Data):
+    """runtime-sized array allocation: int[n]"""
+    element_type: Type
+    size: Expr
+
+@dataclass
 class SetLiteral(Data):
     """set literal"""
     elements: List[Expr]

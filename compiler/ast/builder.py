@@ -1,7 +1,7 @@
 from compiler.lexer.SwagLangParser import SwagLangParser
 from compiler.lexer.SwagLangParserVisitor import SwagLangParserVisitor
 from compiler.ast.nodes import (
-    AccessMod, ASTNode, ArrayLiteral, ArrayType, AssignOp, BaseType, BinaryExpr,
+    AccessMod, ASTNode, ArrayAlloc, ArrayLiteral, ArrayType, AssignOp, BaseType, BinaryExpr,
     BinaryOp, BoolLiteral, Break, CodeBlock, Continue, Data, Defer,
     DoWhileLoop, ElifClause, Expr, FieldAccessor, FloatLiteral,
     ForInLoop, ForLoop, FuncCall, FuncDecl, IfElse, IndexAccessor,
@@ -238,6 +238,8 @@ class ASTBuilder(SwagLangParserVisitor):
             return node
         if ctx.array():
             return self.visit(ctx.array())
+        if ctx.array_alloc():
+            return self.visit(ctx.array_alloc())
         if ctx.map_():
             return self.visit(ctx.map_())
         if ctx.set_():
@@ -247,6 +249,13 @@ class ASTBuilder(SwagLangParserVisitor):
 
     def visitArray(self, ctx) -> ArrayLiteral:
         node = ArrayLiteral(elements=[self.visit(e) for e in ctx.expr()])
+        self._set_pos(node, ctx)
+        return node
+
+    def visitArray_alloc(self, ctx) -> ArrayAlloc:
+        element_type = BaseType(ctx.TYPE().getText())
+        size = self.visit(ctx.expr())
+        node = ArrayAlloc(element_type=element_type, size=size)
         self._set_pos(node, ctx)
         return node
 
