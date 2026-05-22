@@ -167,6 +167,11 @@ class LLVMCompiler:
         self._global_declare("declare i64 @strlen(ptr)")
         self._global_declare("declare i32 @fflush(ptr)")
         self._global_declare("declare ptr @fgets(ptr, i32, ptr)")
+        self._global_declare("declare void @exit(i32)")
+        self._global_declare("declare i32 @puts(ptr)")
+        self._global_declare(
+            '@_err_neg_alloc = private constant [27 x i8] c"error: negative array size\\00"'
+        )
         if platform.system() == "Windows":
             self._global_declare("declare ptr @__acrt_iob_func(i32)")
         else:
@@ -474,6 +479,19 @@ class LLVMCompiler:
     def _array_alloc(self, element_type, size_expr: Expr) -> str:
         n = self._unique()
         size_reg = self._expr(size_expr)
+
+        # runtime guard: negative size - print error and exit
+        neg_lbl = f"arr_alloc_neg_{n}"
+        ok_lbl = f"arr_alloc_ok_{n}"
+        is_neg = f"%arr_alloc_isneg_{n}"
+        self._block_top_level(f"{is_neg} = icmp slt i64 {size_reg}, 0")
+        self._block_top_level(f"br i1 {is_neg}, label %{neg_lbl}, label %{ok_lbl}")
+        self._label(neg_lbl)
+        self._block_top_level("call i32 @puts(ptr @_err_neg_alloc)")
+        self._block_top_level("call void @exit(i32 1)")
+        self._block_top_level("unreachable")
+        self._label(ok_lbl)
+
         bytes_reg = f"%arr_alloc_bytes_{n}"
         buf_reg = f"%arr_alloc_buf_{n}"
         sized_reg = f"%arr_alloc_sized_{n}"
