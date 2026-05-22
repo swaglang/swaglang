@@ -1,4 +1,5 @@
 from __future__ import annotations
+import platform
 from typing import TYPE_CHECKING, Callable
 
 from compiler.ast.nodes import ArrayType, BaseType, Expr, SetType
@@ -160,9 +161,63 @@ def _range_builtin(compiler: "LLVMCompiler", args: list[Expr]) -> str:
     return result
 
 
+def _input_builtin(compiler: "LLVMCompiler", args: list[Expr]) -> str:
+    # flush stdout so prompt appears before cursor
+    compiler._block_top_level("call i32 @fflush(ptr null)")
+
+    # optional prompt
+    if args:
+        _print_handler(compiler, args, newline=False)
+
+    n = compiler._unique()
+
+    # get stdin - platform-specific
+    stdin = f"%input_stdin_{n}"
+    if platform.system() == "Windows":
+        compiler._block_top_level(f"{stdin} = call ptr @__acrt_iob_func(i32 0)")
+    else:
+        compiler._block_top_level(f"{stdin} = load ptr, ptr @stdin, align 8")
+    compiler._block_top_level(
+        f"call ptr @fgets(ptr @_input_buf, i32 4096, ptr {stdin})"
+    )
+
+    # strlen gives length including possible trailing \n
+    raw_len = f"%input_rawlen_{n}"
+    compiler._block_top_level(f"{raw_len} = call i64 @strlen(ptr @_input_buf)")
+
+    # check if last byte is \n; if so, use len-1
+    last_idx = f"%input_lastidx_{n}"
+    last_ptr = f"%input_lastptr_{n}"
+    last_byte = f"%input_lastbyte_{n}"
+    is_nl = f"%input_isnl_{n}"
+    true_len = f"%input_truelen_{n}"
+    compiler._block_top_level(f"{last_idx}  = sub i64 {raw_len}, 1")
+    compiler._block_top_level(
+        f"{last_ptr}  = getelementptr i8, ptr @_input_buf, i64 {last_idx}"
+    )
+    compiler._block_top_level(f"{last_byte} = load i8, ptr {last_ptr}, align 1")
+    compiler._block_top_level(f"{is_nl}     = icmp eq i8 {last_byte}, 10")
+    compiler._block_top_level(
+        f"{true_len}  = select i1 {is_nl}, i64 {last_idx}, i64 {raw_len}"
+    )
+
+    # copy into heap buffer
+    buf = f"%input_heap_{n}"
+    tmp = f"%input_tmp_{n}"
+    result = f"%input_result_{n}"
+    compiler._block_top_level(f"{buf} = call ptr @malloc(i64 {true_len})")
+    compiler._block_top_level(
+        f"call void @llvm.memcpy.p0.p0.i64(ptr {buf}, ptr @_input_buf, i64 {true_len}, i1 false)"
+    )
+    compiler._block_top_level(f"{tmp}    = insertvalue %Str undef, i64 {true_len}, 0")
+    compiler._block_top_level(f"{result} = insertvalue %Str {tmp}, ptr {buf}, 1")
+    return result
+
+
 BUILTINS: dict[str, BuiltinHandler] = {
     "println": lambda c, args: _print_handler(c, args, newline=True),
     "print": lambda c, args: _print_handler(c, args, newline=False),
     "len": lambda c, args: _len_builtin(c, args[0]),
     "range": lambda c, args: _range_builtin(c, args),
+    "input": lambda c, args: _input_builtin(c, args),
 }

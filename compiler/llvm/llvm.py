@@ -1,3 +1,4 @@
+import platform
 from typing import List
 
 from compiler.ast.nodes import (
@@ -162,7 +163,15 @@ class LLVMCompiler:
         self._global_declare(self._printf_decl())
         self._global_declare("declare ptr @malloc(i64)")
         self._global_declare("declare double @llvm.pow.f64(double, double)")
-        self._global_declare("declare void @llvm.memcpy.p0.p0.i64(ptr, ptr, i64, i1)\n")
+        self._global_declare("declare void @llvm.memcpy.p0.p0.i64(ptr, ptr, i64, i1)")
+        self._global_declare("declare i64 @strlen(ptr)")
+        self._global_declare("declare i32 @fflush(ptr)")
+        self._global_declare("declare ptr @fgets(ptr, i32, ptr)")
+        if platform.system() == "Windows":
+            self._global_declare("declare ptr @__acrt_iob_func(i32)")
+        else:
+            self._global_declare("@stdin = external global ptr")
+        self._global_declare('@_input_buf = private global [4096 x i8] zeroinitializer\n')
 
         for stmt in prog.stmts:
             result = self._codegen(stmt)

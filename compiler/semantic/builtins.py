@@ -32,6 +32,8 @@ BUILTIN_SIGS: dict[str, tuple[list[Callable], Optional[Type]]] = {
     "len": ([_sizeable], BaseType.INT),
     # range(n), range(start, end), range(start, end, step)
     "range": ([_int, _int, _int], ArrayType(BaseType.INT)),
+    # input() or input("prompt") -> string
+    "input": ([_any], BaseType.STRING),
 }
 
 _TYPED: dict[str, FuncDecl] = {}
