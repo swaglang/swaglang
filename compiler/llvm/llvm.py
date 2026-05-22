@@ -167,6 +167,7 @@ class LLVMCompiler:
         self._global_declare("declare i64 @strlen(ptr)")
         self._global_declare("declare i32 @fflush(ptr)")
         self._global_declare("declare ptr @fgets(ptr, i32, ptr)")
+        self._global_declare("declare i32 @memcmp(ptr, ptr, i64)")
         self._global_declare("declare void @exit(i32)")
         self._global_declare("declare i32 @puts(ptr)")
         self._global_declare(
@@ -673,11 +674,106 @@ class LLVMCompiler:
                 )
                 self._block_top_level(f"{res} = insertvalue %Str {tmp}, ptr {buf}, 1")
                 return res
+            case (
+                BinaryOp.EQ
+                | BinaryOp.NEQ
+                | BinaryOp.LT
+                | BinaryOp.GT
+                | BinaryOp.LTE
+                | BinaryOp.GTE
+            ):
+                return self._string_cmp(op, left, right)
             case _:
                 print(f"string op {op} not implemented")
                 return ""
 
         return populated_reg
+
+    def _string_cmp(self, op: BinaryOp, left: str, right: str) -> str:
+        n = self._unique()
+        len_a = f"%scmp_la_{n}"
+        data_a = f"%scmp_da_{n}"
+        len_b = f"%scmp_lb_{n}"
+        data_b = f"%scmp_db_{n}"
+        min_len = f"%scmp_min_{n}"
+        lt_len = f"%scmp_ltlen_{n}"
+        raw = f"%scmp_raw_{n}"
+        raw64 = f"%scmp_raw64_{n}"
+        result = self._reg()
+
+        self._block_top_level(f"{len_a} = extractvalue %Str {left},  0")
+        self._block_top_level(f"{data_a} = extractvalue %Str {left},  1")
+        self._block_top_level(f"{len_b} = extractvalue %Str {right}, 0")
+        self._block_top_level(f"{data_b} = extractvalue %Str {right}, 1")
+
+        # min(len_a, len_b) for memcmp length
+        self._block_top_level(f"{lt_len} = icmp slt i64 {len_a}, {len_b}")
+        self._block_top_level(
+            f"{min_len} = select i1 {lt_len}, i64 {len_a}, i64 {len_b}"
+        )
+
+        self._block_top_level(
+            f"{raw} = call i32 @memcmp(ptr {data_a}, ptr {data_b}, i64 {min_len})"
+        )
+        self._block_top_level(f"{raw64} = sext i32 {raw} to i64")
+
+        match op:
+            case BinaryOp.EQ:
+                # equal iff same length AND memcmp==0
+                len_eq = f"%scmp_leq_{n}"
+                mem_eq = f"%scmp_meq_{n}"
+                self._block_top_level(f"{len_eq} = icmp eq i64 {len_a}, {len_b}")
+                self._block_top_level(f"{mem_eq} = icmp eq i64 {raw64}, 0")
+                self._block_top_level(f"{result} = and i1 {len_eq}, {mem_eq}")
+            case BinaryOp.NEQ:
+                len_eq = f"%scmp_leq_{n}"
+                mem_eq = f"%scmp_meq_{n}"
+                self._block_top_level(f"{len_eq} = icmp eq i64 {len_a}, {len_b}")
+                self._block_top_level(f"{mem_eq} = icmp eq i64 {raw64}, 0")
+                both = f"%scmp_both_{n}"
+                self._block_top_level(f"{both} = and i1 {len_eq}, {mem_eq}")
+                self._block_top_level(f"{result} = xor i1 {both}, 1")
+            case BinaryOp.LT:
+                mem_lt = f"%scmp_mlt_{n}"
+                mem_eq = f"%scmp_meq_{n}"
+                len_lt = f"%scmp_llt_{n}"
+                tie = f"%scmp_tie_{n}"
+                self._block_top_level(f"{mem_lt} = icmp slt i64 {raw64}, 0")
+                self._block_top_level(f"{mem_eq} = icmp eq  i64 {raw64}, 0")
+                self._block_top_level(f"{len_lt} = icmp slt i64 {len_a}, {len_b}")
+                self._block_top_level(f"{tie} = and i1 {mem_eq}, {len_lt}")
+                self._block_top_level(f"{result} = or  i1 {mem_lt}, {tie}")
+            case BinaryOp.GT:
+                mem_gt = f"%scmp_mgt_{n}"
+                mem_eq = f"%scmp_meq_{n}"
+                len_gt = f"%scmp_lgt_{n}"
+                tie = f"%scmp_tie_{n}"
+                self._block_top_level(f"{mem_gt} = icmp sgt i64 {raw64}, 0")
+                self._block_top_level(f"{mem_eq} = icmp eq  i64 {raw64}, 0")
+                self._block_top_level(f"{len_gt} = icmp sgt i64 {len_a}, {len_b}")
+                self._block_top_level(f"{tie} = and i1 {mem_eq}, {len_gt}")
+                self._block_top_level(f"{result} = or  i1 {mem_gt}, {tie}")
+            case BinaryOp.LTE:
+                mem_lt = f"%scmp_mlt_{n}"
+                mem_eq = f"%scmp_meq_{n}"
+                len_le = f"%scmp_lle_{n}"
+                tie = f"%scmp_tie_{n}"
+                self._block_top_level(f"{mem_lt} = icmp slt i64 {raw64}, 0")
+                self._block_top_level(f"{mem_eq} = icmp eq  i64 {raw64}, 0")
+                self._block_top_level(f"{len_le} = icmp sle i64 {len_a}, {len_b}")
+                self._block_top_level(f"{tie} = and i1 {mem_eq}, {len_le}")
+                self._block_top_level(f"{result} = or  i1 {mem_lt}, {tie}")
+            case BinaryOp.GTE:
+                mem_gt = f"%scmp_mgt_{n}"
+                mem_eq = f"%scmp_meq_{n}"
+                len_ge = f"%scmp_lge_{n}"
+                tie = f"%scmp_tie_{n}"
+                self._block_top_level(f"{mem_gt} = icmp sgt i64 {raw64}, 0")
+                self._block_top_level(f"{mem_eq} = icmp eq  i64 {raw64}, 0")
+                self._block_top_level(f"{len_ge} = icmp sge i64 {len_a}, {len_b}")
+                self._block_top_level(f"{tie} = and i1 {mem_eq}, {len_ge}")
+                self._block_top_level(f"{result} = or  i1 {mem_gt}, {tie}")
+        return result
 
     def _binary_op_float(self, op: BinaryOp, left: str, right: str):
         reg = self._reg()
