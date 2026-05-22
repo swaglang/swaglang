@@ -16,21 +16,23 @@ class _Label(ASTNode):
     label: str
     child: ASTNode
 
-def print_ast(node: ASTNode, types=None) -> None:
-    _print(node, prefix="", is_last=True, types=types)
+def print_ast(node: ASTNode, types=None) -> str:
+    lines: list[str] = []
+    _print(node, prefix="", is_last=True, types=types, out=lines)
+    return "\n".join(lines)
 
-def _print(node: ASTNode, prefix: str, is_last: bool, types=None) -> None:
+def _print(node: ASTNode, prefix: str, is_last: bool, types=None, out: list[str] = None) -> None:
     connector = "└ " if is_last else "├ "
     label = _label(node)
     if types is not None:
         t = types.get(node)
         if t is not None:
             label += f" [{_format_type(t)}]"
-    print(prefix + connector + label)
+    out.append(prefix + connector + label)
     children = _children(node)
     new_prefix = prefix + ("  " if is_last else "│ ")
     for i, child in enumerate(children):
-        _print(child, new_prefix, i == len(children) - 1, types)
+        _print(child, new_prefix, i == len(children) - 1, types, out)
 
 def _format_type(t) -> str:
     match t:

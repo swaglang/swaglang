@@ -83,14 +83,17 @@ class LLVMCompiler:
         self._types = types
         self._symbols = symbols
         self._blocks: List[Block] = []
-        self._global_decl = ""
+        self._globals: list[str] = []
+        self._functions: list[str] = []
         self._nesting = 0
         self._ssa = 0
         self._unique_seq = 0
         self._locals: dict[str, str] = {}
 
     def compile(self) -> str:
-        return self._codegen(self._ast)
+        self._codegen(self._ast)
+        return "\n".join(self._globals) + "\n" + "\n".join(self._functions)
+
 
     def _enter_scope(self):
         self._nesting += 1
@@ -134,10 +137,11 @@ class LLVMCompiler:
     def _end_label(self):
         return self._blocks[-1].end_label()
 
-    def _codegen(self, node: ASTNode) -> str:
+    def _codegen(self, node: ASTNode) -> str | None:
         match node:
             case Prog():
-                return self._prog(node)
+                self._prog(node)
+                return None
             case GlobalVarDecl():
                 return self._global_var_decl(node)
             case FuncCall():
@@ -146,14 +150,12 @@ class LLVMCompiler:
                 return self._func_decl(node)
             case _:
                 print(f"Codegen for {type(node).__name__} not implemented yet")
-                return ""
+                return None
 
     def _global_declare(self, decl_str: str):
-        self._global_decl += decl_str + "\n"
+        self._globals.append(decl_str)
 
-    def _prog(self, prog: Prog) -> str:
-        out = ""
-
+    def _prog(self, prog: Prog) -> None:
         self._global_declare(self._HEADER)
         self._global_declare(self._STRING_DECL)
         self._global_declare(self._ARR_DECL)
@@ -163,9 +165,9 @@ class LLVMCompiler:
         self._global_declare("declare void @llvm.memcpy.p0.p0.i64(ptr, ptr, i64, i1)\n")
 
         for stmt in prog.stmts:
-            out += self._codegen(stmt)
-        out = self._global_decl + out
-        return out
+            result = self._codegen(stmt)
+            if result:
+                self._functions.append(result)
 
     def _printf_decl(self) -> str:
         printf_decl = "declare i32 @printf(i8*, ...)  ; printf decl\n\n"
