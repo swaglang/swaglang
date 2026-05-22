@@ -714,8 +714,18 @@ class SemanticAnalyzer:
             return BaseType.ERROR
 
         if func_sym.decl_node is None:
-            # polymorphic builtin (e.g. println) — accept any args, return void
-            infer_args()
+            from compiler.semantic.builtins import BUILTIN_SIGS
+            sig = BUILTIN_SIGS.get(node.func)
+            arg_types = [self._infer_expr(a) for a in node.args]
+            if sig:
+                arg_checks, return_type = sig
+                for i, (check, t) in enumerate(zip(arg_checks, arg_types)):
+                    if not check(t):
+                        self._error(
+                            f"'{node.func}' argument {i + 1}: invalid type '{t}'",
+                            "TypeError",
+                        )
+                return return_type
             return None
 
         func_decl: FuncDecl = func_sym.decl_node  # type: ignore[assignment]

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Callable
 
-from compiler.ast.nodes import BaseType, Expr
+from compiler.ast.nodes import ArrayType, BaseType, Expr, SetType
 
 if TYPE_CHECKING:
     from compiler.llvm.llvm import LLVMCompiler
@@ -53,8 +53,14 @@ def _print_handler(compiler: "LLVMCompiler", args: list[Expr], newline: bool) ->
 
 def _len_builtin(compiler: "LLVMCompiler", arg: Expr) -> str:
     val = compiler._expr(arg)
+    t = compiler._types.get(arg)
     len_reg = compiler._reg()
-    compiler._block_top_level(f"{len_reg} = extractvalue {compiler._STRING_TYPE_NAME} {val}, 0")
+    match t:
+        case ArrayType() | SetType():
+            llvm_t = compiler._ARR_TYPE_NAME
+        case _:  # string
+            llvm_t = compiler._STRING_TYPE_NAME
+    compiler._block_top_level(f"{len_reg} = extractvalue {llvm_t} {val}, 0")
     return len_reg
 
 BUILTINS: dict[str, BuiltinHandler] = {
